@@ -1,0 +1,49 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Text Gradient */
+.gradient-text {
+  background: linear-gradient(90deg, #A80000, #010DF3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Border Gradient */
+.gradient-border {
+  position: relative;
+  border-radius: 12px;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(90deg, #A80000, #010DF3);
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+.gradient-icon {
+  background: linear-gradient(90deg, #A80000, #010DF3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.text {
+  color:#CAC8F9
+}
+
+.glow-bg {
+  width: 100%;
+  
+  background:
+    radial-gradient(circle at 60% 40%, rgba(80, 90, 255, 0.6), transparent 60%),
+    linear-gradient(135deg, #000000, #000000);
+}
