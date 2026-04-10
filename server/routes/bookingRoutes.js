@@ -1,14 +1,20 @@
-import express from "express"
-import protect from '../middleware/auth.js';
-import { changeBookingStatus, checkAvailabilityOfCar, createBooking, getOwnerBooking, getUserBooking } from "../controllers/BookingController.js";
-
+import express from "express";
+import { protect, restrictTo } from '../middleware/auth.js';
+import { changeBookingStatus, checkAvailabilityOfCar, createBooking, getOwnerBooking, getUserBooking, createCheckoutSession } from "../controllers/BookingController.js";
 
 const bookingRouter = express.Router();
 
-bookingRouter.post('/check-availability', checkAvailabilityOfCar)
-bookingRouter.post('/create',protect ,createBooking)
-bookingRouter.get('/user',protect ,getUserBooking)
-bookingRouter.get('/owner',protect ,getOwnerBooking)
-bookingRouter.post('/change-status',protect ,changeBookingStatus)
+bookingRouter.post('/check-availability', checkAvailabilityOfCar);
 
-export default bookingRouter
+// Publicly accessible for logged in users
+bookingRouter.use(protect);
+
+bookingRouter.post('/create', createBooking);
+bookingRouter.get('/user', getUserBooking);
+bookingRouter.post('/checkout/:bookingId', createCheckoutSession);
+
+// Owner specific routes
+bookingRouter.get('/owner', restrictTo('owner', 'admin'), getOwnerBooking);
+bookingRouter.post('/change-status', restrictTo('owner', 'admin'), changeBookingStatus);
+
+export default bookingRouter;

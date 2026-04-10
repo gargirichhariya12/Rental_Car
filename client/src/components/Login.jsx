@@ -1,107 +1,205 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useAppContext } from '../Context/AppContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, User, Chrome, ChevronRight, X } from 'lucide-react';
 
 const Login = ({ setShowLogin }) => {
-
-  const [state, setState] = useState("login")
-
+  void motion;
+  const { setToken, setUser, setIsOwner, fetchUser } = useAppContext();
+  const [state, setState] = useState("login");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: ""
-  })
+  });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Form Data:", formData)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const url = state === "login" ? "/api/user/login" : "/api/user/register";
+      const { data } = await axios.post(url, formData);
+
+      if (data.status === 'success') {
+        const accessToken = data.accessToken;
+        const loggedInUser = data.data?.user;
+
+        localStorage.setItem('token', accessToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        setToken(accessToken);
+
+        if (loggedInUser) {
+          setUser(loggedInUser);
+          setIsOwner(loggedInUser.role === 'owner' || loggedInUser.role === 'admin');
+        } else {
+          await fetchUser();
+        }
+
+        setShowLogin(false);
+        toast.success(state === "login" ? "Welcome back!" : "Account created successfully");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Authentication failed");
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_BASE_URL}/auth/google`;
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: { type: "spring", damping: 25, stiffness: 300 }
+    },
+    exit: { opacity: 0, scale: 0.9, y: 20 }
+  };
 
   return (
-    <div onClick={() => setShowLogin(false)} className='fixed top-0 bottom-0 left-0 right-0 z-50 flex items-center text-sm bg-black/50  justify-center'>
-      <form
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={() => setShowLogin(false)} 
+      className='fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm'
+    >
+      <motion.div
+        variants={modalVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-        className="sm:w-87.5 w-full text-center bg-gray-900 border border-gray-800 rounded-2xl px-8 max-w-xl"
+        className="sm:w-[450px] w-full bg-gray-900 border border-white/10 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden"
       >
-        <h1 className="text-white text-3xl mt-10 font-medium">
-          {state === "login" ? "Login" : "Sign up"}
-        </h1>
+        {/* Background Glow */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 blur-[80px] rounded-full" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-red-600/10 blur-[80px] rounded-full" />
 
-        <p className="text-gray-400 text-sm mt-2">Please sign in to continue</p>
+        <button 
+          onClick={() => setShowLogin(false)}
+          className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+        >
+          <X size={20} />
+        </button>
 
-        {state !== "login" && (
-          <div className="flex items-center mt-6 w-full bg-gray-800 border border-gray-700 h-12 rounded-full overflow-hidden pl-6 gap-2 ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="5" />
-              <path d="M20 21a8 8 0 0 0-16 0" />
-            </svg>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-black text-white tracking-tight">
+            {state === "login" ? "Welcome Back" : "Create Account"}
+          </h1>
+          <p className="text-gray-400 mt-2 text-sm">
+            {state === "login" ? "Enter your details to access your account" : "Join our exclusive car rental community"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <AnimatePresence mode="wait">
+            {state !== "login" && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="relative"
+              >
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                  <User size={18} />
+                </div>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Full Name"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <Mail size={18} />
+            </div>
             <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              className="w-full bg-transparent text-white placeholder-gray-400 border-none outline-none"
-              value={formData.name}
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
+              value={formData.email}
               onChange={handleChange}
               required
             />
           </div>
-        )}
 
-        <div className="flex items-center w-full mt-4 bg-gray-800 border border-gray-700 h-12 rounded-full overflow-hidden pl-6 gap-2 ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-          </svg>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email id"
-            className="w-full bg-transparent text-white placeholder-gray-400 border-none outline-none"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <Lock size={18} />
+            </div>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div className="flex items-center mt-4 w-full bg-gray-800 border border-gray-700 h-12 rounded-full overflow-hidden pl-6 gap-2 ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            className="w-full bg-transparent text-white placeholder-gray-400 border-none outline-none"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          {state === "login" && (
+            <div className="flex justify-end">
+              <button type="button" className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">
+                Forgot password?
+              </button>
+            </div>
+          )}
 
-        <div className="mt-4 text-left">
-          <button type="button" className="text-sm text-indigo-400 hover:underline">
-            Forget password?
+          <button 
+            type="submit" 
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+          >
+            {state === "login" ? "Sign In" : "Get Started"} <ChevronRight size={18} />
           </button>
+        </form>
+
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-gray-900 px-4 text-gray-500 font-medium">Or continue with</span>
+          </div>
         </div>
 
-        <button type="submit" className="mt-2 w-full h-11 rounded-full text-white bg-indigo-600 hover:bg-indigo-500 transition">
-          {state === "login" ? "Login" : "Sign up"}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full bg-white text-black font-bold py-3.5 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5"
+        >
+          <Chrome size={20} className="text-red-500" />
+          Continue with Google
         </button>
 
-        <p
-          onClick={() => setState(prev => (prev === "login" ? "register" : "login"))}
-          className="text-gray-400 text-sm mt-3 mb-11 cursor-pointer"
-        >
-          {state === "login" ? "Don't have an account?" : "Already have an account?"}
-          <span className="text-indigo-400 hover:underline ml-1">click here</span>
+        <p className="text-center text-sm text-gray-500 mt-8">
+          {state === "login" ? "No account yet?" : "Already a member?"}
+          <button
+            onClick={() => setState(prev => (prev === "login" ? "register" : "login"))}
+            className="ml-1 text-indigo-400 font-bold hover:underline"
+          >
+            {state === "login" ? "Create Account" : "Sign In"}
+          </button>
         </p>
-      </form>
-    </div>
-  )
-}
+      </motion.div>
+    </motion.div>
+  );
+};
 
-export default Login
+export default Login;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import { toast } from 'react-hot-toast'
 import Title from "../../components/Owner/Title";
-import { dummyCarData } from '../../assets/dummyCarData'
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 
 const ManageCar = () => {
@@ -8,12 +9,48 @@ const ManageCar = () => {
   const [cars, setCars] = useState([])
 
   const fetchOwnerCars = async () => {
-    setCars(dummyCarData)
+    try {
+      const { data } = await axios.get('/api/owner/cars');
+      if (data.status === 'success') {
+        setCars(data.data.cars);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch owner cars");
+    }
   }
 
+  const toggleAvailability = async (carId) => {
+    try {
+      const { data } = await axios.post('/api/owner/toggle-car', { carId });
+      if (data.status === 'success') {
+        setCars((currentCars) => currentCars.map((car) => (
+          car._id === carId ? { ...car, isAvailable: data.data.isAvailable } : car
+        )));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update availability");
+    }
+  };
+
+  const removeCar = async (carId) => {
+    try {
+      const { data } = await axios.post('/api/owner/delete-car', { carId });
+      if (data.status === 'success') {
+        toast.success("Car removed from listings");
+        setCars((currentCars) => currentCars.filter((car) => car._id !== carId));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to remove car");
+    }
+  };
+
   useEffect(() => {
-    fetchOwnerCars()
-  })
+    const loadCars = async () => {
+      await fetchOwnerCars();
+    };
+
+    loadCars();
+  }, [])
   return (
     <div className='px-4 pt-10 md:px-10 w-full'>
       <Title title='Manage Cars' subTitle='View all listed cars, update their details, or remove them from the booking platform' />
@@ -31,8 +68,8 @@ const ManageCar = () => {
             </tr>
           </thead>
           <tbody >
-            {cars.map((car, index) => (
-              <tr key={index} className='border-t border-gray-300'>
+            {cars.map((car) => (
+              <tr key={car._id} className='border-t border-gray-300'>
                 <td className='p-3 flex items-center gap-3'>
                   <img src={car.image} alt="" className='h-12 w-12 aspect-square rounded-md object-cover' />
                   <div className='max-md:hidden'>
@@ -43,14 +80,14 @@ const ManageCar = () => {
                 <td className='p-3 max-md:hidden'>{car.category}</td>
                 <td className='p-3 max-md:hidden'>{currency}{car.pricePerDay}/day</td>
                 <td className='p-3 max-md:hidden'>
-                  <span className={`px-3 py-1 rounded-full text-sx ${car.isAvaliable ? 'bg-green-100/20 text-green-500' : 'bg-red-100/20 text-red-500'}`}>
-                    {car.isAvaliable ? 'Available' : 'Unavailable'}
+                  <span className={`px-3 py-1 rounded-full text-sx ${car.isAvailable ? 'bg-green-100/20 text-green-500' : 'bg-red-100/20 text-red-500'}`}>
+                    {car.isAvailable ? 'Available' : 'Unavailable'}
                   </span>
                 </td>
                 <td className="flex items-center p-3 gap-2">
                   {car.isAvailable ? (
-                    <Eye className="cursor-pointer" size={20} />) : (<EyeOff className="cursor-pointer" size={20} />)}
-                  <Trash2 className="cursor-pointer" size={20} />
+                    <Eye className="cursor-pointer" size={20} onClick={() => toggleAvailability(car._id)} />) : (<EyeOff className="cursor-pointer" size={20} onClick={() => toggleAvailability(car._id)} />)}
+                  <Trash2 className="cursor-pointer" size={20} onClick={() => removeCar(car._id)} />
                 </td>
               </tr>
             ))}

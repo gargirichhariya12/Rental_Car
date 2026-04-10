@@ -6,10 +6,12 @@ const bookingSchema = new mongoose.Schema(
     car: { type: ObjectId, ref: "Car", required: true },
     user: { type: ObjectId, ref: "User", required: true },
     owner : { type: ObjectId, ref: "User", required: true },
-    pickupDate:{ type: Date, required: true },
-    returnDate:{ type: Date, required: true },
-    Status:{type:String, enum:['pending', 'confirmed', 'cancelled'], default:"pending"},
-    price:{type:Number, required:true}
+    pickupDate: { type: Date, required: true },
+    returnDate: { type: Date, required: true },
+    status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: "pending" },
+    price: { type: Number, required: true },
+    paymentId: { type: String },
+    paymentStatus: { type: String, enum: ['unpaid', 'paid', 'failed'], default: 'unpaid' }
   },
   { timestamps: true },
 );
