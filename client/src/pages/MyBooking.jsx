@@ -4,6 +4,7 @@ import { MapPin, CreditCard, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../Context/AppContext';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import StatusBadge from '../components/StatusBadge';
 
 function MyBooking() {
   const [bookings, setBookings] = useState([]);
@@ -66,20 +67,14 @@ function MyBooking() {
                 <div>
                   <div className='flex items-center justify-between mb-2'>
                     <div className='flex gap-2'>
-                      <span className='px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs font-medium'>
-                        Booking #{index + 1}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                        booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500' : 
-                        booking.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : 
-                        'bg-red-500/10 text-red-500'
-                      }`}>
-                        {booking.status}
-                      </span>
+                      <StatusBadge label={`Booking #${index + 1}`} tone='neutral' className='font-medium' />
+                      <StatusBadge
+                        label={booking.status}
+                        tone={booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : 'danger'}
+                        className='font-bold uppercase'
+                      />
                       {booking.paymentStatus === 'paid' && (
-                        <span className='px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-xs font-bold uppercase'>
-                          Paid
-                        </span>
+                        <StatusBadge label='Paid' tone='info' className='font-bold uppercase' />
                       )}
                     </div>
                   </div>

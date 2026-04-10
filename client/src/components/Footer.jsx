@@ -3,6 +3,12 @@ import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, ExternalLi
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const navLinks = [
+    { label: "Home", to: "/" },
+    { label: "Fleet", to: "/cars" },
+    { label: "Reservations", to: "/my-bookings" },
+  ];
+
   return (
     <footer className="bg-black border-t border-white/5 pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-6">
@@ -29,12 +35,12 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <h3 className="text-white font-bold mb-6 tracking-wide uppercase text-xs">Navigation</h3>
             <ul className="space-y-4">
-              {['Home', 'Fleet', 'Special Offers', 'Reservations'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-gray-500 hover:text-white text-sm transition-colors flex items-center gap-2 group">
+              {navLinks.map((item) => (
+                <li key={item.label}>
+                  <Link to={item.to} className="text-gray-500 hover:text-white text-sm transition-colors flex items-center gap-2 group">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {item}
-                  </a>
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>

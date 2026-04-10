@@ -1,9 +1,9 @@
 import Booking from "../models/Booking.js";
-import Car from "../models/Car.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import BookingService from "../services/BookingService.js";
 import PaymentService from "../services/PaymentService.js";
+import CarService from "../services/CarService.js";
 
 // Api to create checkout session
 export const createCheckoutSession = catchAsync(async (req, res, next) => {
@@ -26,8 +26,8 @@ export const checkAvailabilityOfCar = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide location, pickup date, and return date", 400));
   }
 
-  // fetch all available cars for the given location
-  const cars = await Car.find({ location, isAvailable: true });
+  // fetch matching cars for the provided filters first, then narrow by availability
+  const cars = await CarService.getAllCars(req.body);
 
   // check car available for the given date range
   const availableCarPromises = cars.map(async (car) => {
@@ -67,12 +67,15 @@ export const createBooking = catchAsync(async (req, res, next) => {
 export const getUserBooking = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
   const bookings = await Booking.find({ user: _id })
-    .populate("car")
+    .populate("car", "brand model image year fuel_type transmission location pricePerDay category seating_capacity")
     .sort({ createdAt: -1 });
+
+  const validBookings = bookings.filter((booking) => booking.car);
 
   res.status(200).json({
     status: "success",
-    data: { bookings }
+    results: validBookings.length,
+    data: { bookings: validBookings }
   });
 });
 

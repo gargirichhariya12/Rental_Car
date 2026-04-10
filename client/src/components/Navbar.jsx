@@ -1,22 +1,34 @@
 import { useState, useEffect } from 'react';
 import React from "react";
+import axios from 'axios';
 import logo from '../assets/logo.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Settings, LogOut, Heart } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { useAppContext } from '../Context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
-  const { setShowLogin, user, logout, isOwner, axios } = useAppContext();
+  void motion;
+  const { setShowLogin, user, logout, isOwner, fetchUser } = useAppContext();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isActivePath = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
+
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -31,7 +43,8 @@ export default function Navbar() {
     try {
       const { data } = await axios.post('/api/owner/change-role');
       if (data.status === 'success') {
-        window.location.reload();
+        await fetchUser();
+        navigate('/owner');
       }
     } catch (error) {
       console.error("Role change failed", error);
@@ -47,19 +60,21 @@ export default function Navbar() {
     }
   };
 
+  const accentTextClass = "text-indigo-400 hover:text-indigo-300";
+
   return (
     <motion.nav 
       initial="hidden"
       animate="visible"
       variants={navVariants}
       className={`w-full px-4 py-4 sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-black/70 backdrop-blur-xl border-b border-white/10 py-3" : "bg-transparent"
+        scrolled ? "bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 py-3" : "bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900"
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Logo */}
-        <Link to="/" className="flex items-center group">
+        <Link to="/" onClick={() => setOpen(false)} className="flex items-center group">
           <motion.img 
             whileHover={{ scale: 1.05 }}
             src={logo} 
@@ -69,20 +84,21 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 backdrop-blur-md">
+        <div className="hidden md:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-full px-4 py-1.5 backdrop-blur-md shadow-lg shadow-black/20">
           {menuLinks.map((link, index) => (
             <Link
               key={index}
               to={link.path}
+              onClick={() => setOpen(false)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all relative ${
-                location.pathname === link.path ? "text-white" : "text-gray-400 hover:text-white"
+                isActivePath(link.path) ? "text-white" : "text-gray-400 hover:text-indigo-300"
               }`}
             >
               {link.name}
-              {location.pathname === link.path && (
+              {isActivePath(link.path) && (
                 <motion.div 
                   layoutId="nav-glow"
-                  className="absolute inset-0 bg-white/10 rounded-full -z-10"
+                  className="absolute inset-0 rounded-full bg-indigo-500/15 border border-indigo-500/30 -z-10"
                 />
               )}
             </Link>
@@ -90,7 +106,8 @@ export default function Navbar() {
           {user?.role === 'admin' && (
             <Link 
               to="/admin" 
-              className="px-4 py-1.5 rounded-full text-sm font-medium text-amber-400 hover:text-amber-300 transition-all"
+              onClick={() => setOpen(false)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${accentTextClass}`}
             >
               Admin Panel
             </Link>
@@ -103,8 +120,11 @@ export default function Navbar() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => isOwner ? navigate('/owner') : changeRole()} 
-              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
+              onClick={() => {
+                setOpen(false);
+                isOwner ? navigate('/owner') : changeRole();
+              }}
+              className={`text-xs font-bold uppercase tracking-wider transition-colors ${accentTextClass}`}
             >
               {isOwner ? 'Owner View' : 'Earn with us'}
             </motion.button>
@@ -113,10 +133,13 @@ export default function Navbar() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => { user ? logout() : setShowLogin(true) }}
+            onClick={() => {
+              setOpen(false);
+              user ? logout() : setShowLogin(true);
+            }}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold transition-all ${
               user 
-                ? "bg-gray-800 text-gray-300 hover:bg-gray-700" 
+                ? "bg-zinc-900 border border-zinc-800 text-gray-300 hover:bg-zinc-800" 
                 : "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500"
             }`}
           >
@@ -129,7 +152,12 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button onClick={() => setOpen(!open)} className="md:hidden text-white p-2">
+        <button
+          type="button"
+          aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
+          onClick={() => setOpen(!open)}
+          className="md:hidden text-white p-2"
+        >
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -141,26 +169,48 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-2xl border-b border-white/10 flex flex-col items-center gap-4 py-8 overflow-hidden"
+            className="md:hidden absolute top-full left-0 w-full bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800 flex flex-col items-center gap-4 py-8 overflow-hidden"
           >
             {menuLinks.map((link, index) => (
               <Link
                 key={index}
                 to={link.path}
                 onClick={() => setOpen(false)}
-                className="text-white text-xl font-medium"
+                className={`text-xl font-medium ${isActivePath(link.path) ? 'text-white' : 'text-gray-300'}`}
               >
                 {link.name}
               </Link>
             ))}
             {user?.role === 'admin' && (
-              <Link to="/admin" onClick={() => setOpen(false)} className="text-amber-400 text-xl font-medium">
+              <Link to="/admin" onClick={() => setOpen(false)} className={`text-xl font-medium ${isActivePath('/admin') ? 'text-indigo-300' : 'text-indigo-400'}`}>
                 Admin Panel
               </Link>
             )}
-            <hr className="w-1/2 border-white/5 my-2" />
+            <hr className="w-1/2 border-zinc-800 my-2" />
+            {user && (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  if (isOwner) {
+                    navigate('/owner');
+                    return;
+                  }
+                  changeRole();
+                }}
+                className="text-indigo-400 text-xl font-medium hover:text-indigo-300 transition-colors"
+              >
+                {isOwner ? 'Owner View' : 'Earn with us'}
+              </button>
+            )}
             <button 
-              onClick={() => { setOpen(false); setShowLogin(true); }}
+              onClick={() => {
+                setOpen(false);
+                if (user) {
+                  logout();
+                  return;
+                }
+                setShowLogin(true);
+              }}
               className="bg-indigo-600 text-white px-10 py-3 rounded-2xl font-bold"
             >
               {user ? 'Logout' : 'Access Account'}

@@ -1,19 +1,44 @@
 import React, { useEffect, useState } from 'react'
-import { dummyMyBookingsData } from '../../assets/dummyCarData'
+import axios from 'axios'
+import { toast } from 'react-hot-toast'
 import Title from '../../components/Owner/Title'
+import StatusBadge from '../../components/StatusBadge'
 
 const ManageBooking = () => {
   const currency = import.meta.env.VITE_CURRENCY
-  const [cars, setCars] = useState([])
-
   const [bookings, setBookings] = useState([])
   const fetchOwnerBooking = async () => {
-    setBookings(dummyMyBookingsData)
+    try {
+      const { data } = await axios.get('/api/bookings/owner');
+      if (data.status === 'success') {
+        setBookings(data.data.bookings);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch bookings");
+    }
   }
 
+  const updateBookingStatus = async (bookingId, status) => {
+    try {
+      const { data } = await axios.post('/api/bookings/change-status', { bookingId, status });
+      if (data.status === 'success') {
+        toast.success("Booking status updated");
+        setBookings((currentBookings) => currentBookings.map((booking) => (
+          booking._id === bookingId ? { ...booking, status: data.data.booking.status } : booking
+        )));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update booking");
+    }
+  };
+
   useEffect(() => {
-    fetchOwnerBooking()
-  })
+    const loadBookings = async () => {
+      await fetchOwnerBooking();
+    };
+
+    loadBookings();
+  }, [])
   return (
     <div className='px-4 pt-10 md:px-10 w-full'>
       <Title title='Manage Booking' subTitle='Track all customer bookings, approve or cancel requests, and manage booking statuses' />
@@ -31,8 +56,8 @@ const ManageBooking = () => {
             </tr>
           </thead>
           <tbody >
-            {bookings.map((booking, index) => (
-              <tr key={index} className='border-t border-gray-300 text'>
+            {bookings.map((booking) => (
+              <tr key={booking._id} className='border-t border-gray-300 text'>
                 <td className='p-3 flex items-center gap-3'>
                   <img src={booking.car.image} alt="" className='h-12 w-12 aspect-square rounded-md max-md:hidden' />
                   <p className='font-medium max-md:hidden'>{booking.car.brand} {booking.car.model}</p>
@@ -44,18 +69,26 @@ const ManageBooking = () => {
                   {currency} {booking.price}
                 </td>
                 <td className='p-3 max-md:hidden'>
-                  <span className='bg-gray-100/10 px-3 py-1 rounded-full text-xs'>
-                    Offline
-                  </span>
+                  <StatusBadge
+                    label={booking.paymentStatus || 'unpaid'}
+                    tone={booking.paymentStatus === 'paid' ? 'info' : 'neutral'}
+                  />
                 </td>
 
                 <td className='p-3 '>
-                  {booking.status === 'pending' ? (<select>
-                    <option value="pending">pending </option>
-                    <option value="pending">Cancelled </option>
-                    <option value="pending">Confirmed </option>
+                  {booking.status === 'pending' ? (<select
+                    value={booking.status}
+                    onChange={(e) => updateBookingStatus(booking._id, e.target.value)}
+                    className='bg-black/40 border border-gray-500 rounded-md px-2 py-1 text-white'
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="confirmed">Confirmed</option>
                   </select>) : (
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === 'confirmed' ? 'bg-green-100/10 text-green-500' : 'bg-red-100/10 text-red-500'}`}>{booking.status}</span>
+                    <StatusBadge
+                      label={booking.status}
+                      tone={booking.status === 'confirmed' ? 'success' : 'danger'}
+                    />
                   )}
                 </td>
               </tr>

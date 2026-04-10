@@ -6,9 +6,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 class PaymentService {
   async createCheckoutSession(bookingId, userId) {
-    const booking = await Booking.findById(bookingId).populate('car');
+    const booking = await Booking.findById(bookingId).populate('car user');
     if (!booking) throw new AppError('Booking not found', 404);
-    if (booking.user.toString() !== userId.toString()) throw new AppError('Unauthorized', 403);
+    if (booking.user._id.toString() !== userId.toString()) throw new AppError('Unauthorized', 403);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

@@ -48,7 +48,7 @@ const AdminLayout = () => {
         <div className='p-6 border-t border-gray-800'>
           <button 
             onClick={logout}
-            className='flex items-center gap-3 text-gray-400 hover:text-red-400 transition-colors w-full px-3 py-2'
+            className='flex items-center gap-3 text-gray-400 hover:text-white transition-colors w-full px-3 py-2'
           >
             <LogOut size={20} />
             <span className='font-medium'>Logout</span>

@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import CarService from "../services/CarService.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import { sendTokens } from "../utils/tokenUtils.js";
@@ -51,3 +52,22 @@ export const getUserData = catchAsync(async (req, res, next) => {
   });
 });
 
+// List cars for browsing with optional filters
+export const getCars = catchAsync(async (req, res, next) => {
+  const cars = await CarService.getAllCars(req.query);
+
+  res.status(200).json({
+    status: "success",
+    results: cars.length,
+    data: { cars }
+  });
+});
+
+export const getCarDetails = catchAsync(async (req, res, next) => {
+  const car = await CarService.getCarById(req.params.id);
+
+  res.status(200).json({
+    status: "success",
+    data: { car }
+  });
+});

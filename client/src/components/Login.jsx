@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Chrome, ChevronRight, X } from 'lucide-react';
 
 const Login = ({ setShowLogin }) => {
-  const { setToken, fetchUser } = useAppContext();
+  void motion;
+  const { setToken, setUser, setIsOwner, fetchUser } = useAppContext();
   const [state, setState] = useState("login");
   const [formData, setFormData] = useState({
     name: "",
@@ -25,9 +26,20 @@ const Login = ({ setShowLogin }) => {
       const { data } = await axios.post(url, formData);
 
       if (data.status === 'success') {
-        localStorage.setItem('token', data.accessToken);
-        setToken(data.accessToken);
-        await fetchUser();
+        const accessToken = data.accessToken;
+        const loggedInUser = data.data?.user;
+
+        localStorage.setItem('token', accessToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        setToken(accessToken);
+
+        if (loggedInUser) {
+          setUser(loggedInUser);
+          setIsOwner(loggedInUser.role === 'owner' || loggedInUser.role === 'admin');
+        } else {
+          await fetchUser();
+        }
+
         setShowLogin(false);
         toast.success(state === "login" ? "Welcome back!" : "Account created successfully");
       }

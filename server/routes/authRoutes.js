@@ -1,6 +1,13 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 import passport from "passport";
-import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  getAccessCookieOptions,
+  getRefreshCookieOptions,
+} from "../utils/tokenUtils.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -14,7 +21,7 @@ router.get("/google",
 //  Callback
 router.get("/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/login?error=auth_failed`,
+    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`,
     session: false // We use JWTs, not sessions for the app itself, but passport might need it for OAuth
   }),
   (req, res) => {
@@ -22,15 +29,9 @@ router.get("/google/callback",
     const accessToken = generateAccessToken(req.user._id);
     const refreshToken = generateRefreshToken(req.user._id);
 
-    // 2) Set Refresh Token in Cookie
-    const cookieOptions = {
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    };
-
-    res.cookie('refreshToken', refreshToken, cookieOptions);
+    // 2) Set Tokens in Cookies
+    res.cookie('accessToken', accessToken, getAccessCookieOptions());
+    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
 
     // 3) Redirect to frontend with accessToken (or frontend can fetch it via a separate endpoint)
     // For production, it's safer to redirect to a page that fetches the token or pass it securely.
@@ -42,16 +43,45 @@ router.get("/google/callback",
 
 //  Logout
 router.get("/logout", (req, res) => {
-  res.clearCookie('refreshToken');
+  res.clearCookie('accessToken', getAccessCookieOptions());
+  res.clearCookie('refreshToken', getRefreshCookieOptions());
   res.status(200).json({ status: 'success' });
 });
 
 //  Refresh Token Route
-router.get("/refresh", (req, res) => {
+const refreshTokenHandler = async (req, res) => {
   const token = req.cookies.refreshToken;
-  if (!token) return res.status(401).json({ message: 'No refresh token' });
+  if (!token) {
+    return res.status(401).json({ status: 'error', message: 'No refresh token' });
+  }
 
-  // Add logic to verify and issue new access token
-});
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret'
+    );
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ status: 'error', message: 'User no longer exists' });
+    }
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    res.cookie('accessToken', accessToken, getAccessCookieOptions());
+    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
+
+    return res.status(200).json({
+      status: 'success',
+      accessToken,
+    });
+  } catch (error) {
+    return res.status(401).json({ status: 'error', message: 'Invalid refresh token' });
+  }
+};
+
+router.get("/refresh", refreshTokenHandler);
+router.post("/refresh", refreshTokenHandler);
 
 export default router;

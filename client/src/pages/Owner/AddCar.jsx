@@ -1,101 +1,27 @@
-// import { useState } from "react";
-// import { UploadCloud } from "lucide-react";
-// import Title from "../../components/Owner/Title";
-
-// const AddCar = () => {
-//   const [image, setImage] = useState(null);
-//   const [preview, setPreview] = useState(null);
-
-//   const handleDrop = (e) => {
-//     e.preventDefault();
-//     const file = e.dataTransfer.files[0];
-//     handleFile(file);
-//   };
-
-//   const handleFile = (file) => {
-//     if (!file) return;
-//     if (file.size > 20 * 1024 * 1024) {
-//       alert("File must be less than 20MB");
-//       return;
-//     }
-//     setImage(file);
-//     setPreview(URL.createObjectURL(file));
-//   };
-
-//   return (
-//     <div className="min-h-screen p-10  text-white w-full">
-//       <Title title = 'Add Your car' subTitle='Fill in details to list a new car for booking, including pricing, availability, and car specifications.'/>
-
-//       <div className="grid md:grid-cols-2 gap-6 w-full">
-//         {["Brand", "Model", "Year", "Daily Price ($)", "Category", "Transmission", "Fuel Type", "Seating Capacity"].map((label, i) => (
-//           <div key={i}>
-//             <label className="text-sm text-gray-300">{label}</label>
-//             <input
-//               className="w-full mt-1 p-3 rounded-lg bg-black/40  gradient-border focus:outline-none focus:ring-2 focus:ring-blue-500"
-//               placeholder={`Enter ${label}`}
-//             />
-//           </div>
-//         ))}
-//       </div>
-
-//       <div className="mt-6">
-//         <label className="text-sm text-gray-300">Location</label>
-//         <input className="w-full mt-1 p-3 rounded-lg bg-black/40 border border-blue-500/30" placeholder="City, Country" />
-//       </div>
-
-//       <div className="mt-6">
-//         <label className="text-sm text-gray-300">Description</label>
-//         <textarea
-//           rows="4"
-//           className="w-full gradient-border mt-1 p-3 rounded-lg bg-black/40 border border-blue-500/30"
-//           placeholder="Describe your car..."
-//         />
-//       </div>
-
-//       {/* Upload Section */}
-//       <div className="mt-8 grid md:grid-cols-2 gap-6 items-center">
-//         <div
-//           onDrop={handleDrop}
-//           onDragOver={(e) => e.preventDefault()}
-//           className="border-2 border-dashed border-blue-500/50 rounded-xl p-8 text-center cursor-pointer hover:bg-white/5"
-//         >
-//           <input
-//             type="file"
-//             className="hidden"
-//             id="fileUpload"
-//             onChange={(e) => handleFile(e.target.files[0])}
-//           />
-//           <label htmlFor="fileUpload" className="cursor-pointer flex flex-col items-center">
-//             <UploadCloud size={40} className="text-blue-500 mb-2" />
-//             <p className="text-gray-300">Drag & Drop or Click to Upload</p>
-//             <p className="text-xs text-gray-500">(Max 20MB)</p>
-//           </label>
-//         </div>
-
-//         {preview && (
-//           <div className="flex justify-center">
-//             <img src={preview} alt="Preview" className="h-40 rounded-lg shadow-lg" />
-//           </div>
-//         )}
-//       </div>
-
-//       <button className="mt-8 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold">
-//         Save & List Your Car
-//       </button>
-//     </div>
-//   );
-// };
-
-// export default AddCar;
-
-
 import React, { useState } from 'react'
+import axios from 'axios'
+import { toast } from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 import Title from "../../components/Owner/Title";
+import FormField from '../../components/Owner/FormField';
 import { Upload, Check} from 'lucide-react'
 
 const currency = import.meta.env.VITE_CURRENCY
+const categoryOptions = [
+  { value: '', label: 'Select a Category' },
+  { value: 'Sedan', label: 'Sedan' },
+  { value: 'SUV', label: 'SUV' },
+  { value: 'Van', label: 'Van' },
+];
+const locationOptions = [
+  { value: '', label: 'Select a location' },
+  { value: 'Vijay Nagar', label: 'Vijay Nagar' },
+  { value: 'Mahalaxmi Nagar', label: 'Mahalaxmi Nagar' },
+  { value: 'C21', label: 'C21' },
+];
 
 const AddCar = () => {
+  const navigate = useNavigate();
 
   const [image, setImage] = useState()
   const [car, setCar] = useState({
@@ -113,113 +39,110 @@ const AddCar = () => {
 
   const onSubmitHandler = async (e) => {
     e.preventDefault()
+
+    if (!image) {
+      toast.error("Please upload a car image");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("image", image);
+      formData.append("carData", JSON.stringify({
+        ...car,
+        year: Number(car.year),
+        pricePerDay: Number(car.pricePerDay),
+        seating_capacity: Number(car.seating_capacity),
+      }));
+
+      const { data } = await axios.post('/api/owner/add-car', formData);
+      if (data.status === 'success') {
+        toast.success("Car listed successfully");
+        navigate('/owner/manage-cars');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add car");
+    }
   }
   return (
     <div className='px-4 py-10 md:px-10 flex-1 w-full'>
-
       <Title title='Add New Car' subTitle='Fill in details to list a new car for booking, including pricing, availability, and car specifications.' />
 
       <form onSubmit={onSubmitHandler} className='flex flex-col gap-5 text-gray-500 text-sm mt-6 '>
-
-
-
-        {/* car brand and modal */}
         <div className='grid grid-cols-2 gap-3'>
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Brand</label>
-            <div className='gradient-border '>
-              <input type='text' placeholder='eg- BMW, Mercedes, Audi...' value={car.brand} className=' relative z-10 px-3 py-2 mt-1   text-gray-400 bg-black/40 rounded-lg focus:outline-none w-full ' onChange={e => setCar({ ...car, brand: e.target.value })} />
-            </div>
-          </div>
-
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Model</label>
-            <div className='gradient-border'>
-              <input type='text' placeholder='e.g. X5, E-Class, M4....' value={car.model} className='relative z-10 px-3 py-2 mt-1 bg-black/40 rounded-md  text-gray-400 focus:outline-none w-full ' onChange={e => setCar({ ...car, modal: e.target.value })} />
-            </div>
-          </div>
+          <FormField
+            label='Brand'
+            value={car.brand}
+            placeholder='eg- BMW, Mercedes, Audi...'
+            onChange={(e) => setCar({ ...car, brand: e.target.value })}
+          />
+          <FormField
+            label='Model'
+            value={car.model}
+            placeholder='e.g. X5, E-Class, M4....'
+            onChange={(e) => setCar({ ...car, model: e.target.value })}
+          />
         </div>
 
-        {/* year, daily prize, category */}
         <div className='grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 gap-3'>
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Year</label>
-            <div className='gradient-border'>
-              <input type='number' placeholder='2025' value={car.year} className=' relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, year: e.target.value })} />
-            </div>
-          </div>
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Daily price({currency})</label>
-            <div className='gradient-border'>
-              <input type='number' placeholder='100' value={car.pricePerDay} className='relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, pricePerDay: e.target.value })} />
-            </div>
-          </div>
-
-
-          <div className='flex flex-col w-full'>
-            <label className='text-lg'>Category</label>
-
-            <div className='gradient-border mt-1'>
-              <select
-                className='relative z-10 px-3 py-2 bg-black/40 text-gray-400 focus:outline-none w-full rounded-[10px]'
-                value={car.category}
-                onChange={e => setCar({ ...car, category: e.target.value })}
-              >
-                <option value='' className='bg-black/40 text-white' >Select a Category</option>
-                <option value='Sedan' className='bg-black/40 text-white'>Sedan</option>
-                <option value='SUV' className='bg-black/40 text-white' >SUV</option>
-                <option value='Van' className='bg-black/40 text-white' >Van</option>
-              </select>
-            </div>
-          </div>
+          <FormField
+            label='Year'
+            type='number'
+            value={car.year}
+            placeholder='2025'
+            onChange={(e) => setCar({ ...car, year: e.target.value })}
+          />
+          <FormField
+            label={`Daily price(${currency})`}
+            type='number'
+            value={car.pricePerDay}
+            placeholder='100'
+            onChange={(e) => setCar({ ...car, pricePerDay: e.target.value })}
+          />
+          <FormField
+            label='Category'
+            value={car.category}
+            options={categoryOptions}
+            onChange={(e) => setCar({ ...car, category: e.target.value })}
+          />
         </div>
 
-        {/* transmision, fuel type, Seating Capacity*/}
         <div className='grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 gap-3'>
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Transmission</label>
-            <div className='gradient-border'>
-              <input type='text' placeholder='Automatic' value={car.transmission} className='relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, transmission: e.target.value })} />
-            </div>
-          </div>
-          <div className='flex flex-col w-full'>
-            <label className='text text-lg'>Fuel Type</label>
-            <div className='gradient-border'>
-              <input type='text' placeholder='petrol' value={car.fuel_type} className='relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, fuel_type: e.target.value })} />
-            </div>
-          </div>
-          <div className='flex flex-col w-full'>
-            <label className='text-lg'>Seating Capacity</label>
-            <div className='gradient-border mt-1'>
-              <input type='number' placeholder='5' value={car.seating_capacity} className='relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, seating_capacity: e.target.value })} />
-            </div>
-          </div>
+          <FormField
+            label='Transmission'
+            value={car.transmission}
+            placeholder='Automatic'
+            onChange={(e) => setCar({ ...car, transmission: e.target.value })}
+          />
+          <FormField
+            label='Fuel Type'
+            value={car.fuel_type}
+            placeholder='Petrol'
+            onChange={(e) => setCar({ ...car, fuel_type: e.target.value })}
+          />
+          <FormField
+            label='Seating Capacity'
+            type='number'
+            value={car.seating_capacity}
+            placeholder='5'
+            onChange={(e) => setCar({ ...car, seating_capacity: e.target.value })}
+          />
         </div>
 
-        <div className='flex flex-col w-full'>
-          <label className='text-lg'>Location</label>
-          <div className='gradient-border mt-1'>
-            <select
-              className='relative z-10 px-3 py-2 bg-black/40 text-gray-400 focus:outline-none w-full rounded-[10px]'
-              value={car.location}
-              onChange={e => setCar({ ...car, location: e.target.value })}>
-              <option value='' className='bg-black/40 text-white' >Select a location</option>
-              <option value='Vijay Nagar' className='bg-black/40 text-white'>Vijay Nagar</option>
-              <option value='Mahalaxmi Nagar' className='bg-black/40 text-white' >Mahalaxmi Nagar</option>
-              <option value='C21' className='bg-black/40 text-white' >C21</option>
-            </select>
-          </div>
-        </div>
-        {/* Car Description  */}
-        <div className='flex flex-col w-full'>
-          <label className='text text-lg'>Description </label>
-          <div className='gradient-border '>
-            <textarea placeholder='e.g' value={car.description} className='relative z-10 px-3 py-2 mt-1 bg-black/40  text-gray-400 focus:outline-none w-full rounded-lg' onChange={e => setCar({ ...car, description: e.target.value })} />
-          </div>
+        <FormField
+          label='Location'
+          value={car.location}
+          options={locationOptions}
+          onChange={(e) => setCar({ ...car, location: e.target.value })}
+        />
+        <FormField
+          label='Description'
+          value={car.description}
+          placeholder='Tell renters what makes this car special'
+          textarea
+          onChange={(e) => setCar({ ...car, description: e.target.value })}
+        />
 
-        </div>
-
-        {/* Car Image Upload */}
         <div className="flex items-center gap-4">
           <label
             htmlFor="car-image"
@@ -241,18 +164,12 @@ const AddCar = () => {
           </p>
         </div>
 
-
-            <button className='flex items-center gap-2 px-4 py-2.5 mt-4 bg-blue-500 text-white rounded-md font-medium w-max cursor-pointer'>
-              <Check/> List Your Car
-            </button>
-
-
-
+        <button type="submit" className='flex items-center gap-2 px-4 py-2.5 mt-4 bg-blue-500 text-white rounded-md font-medium w-max cursor-pointer'>
+          <Check/> List Your Car
+        </button>
       </form>
-
     </div>
   )
 }
 
 export default AddCar
-

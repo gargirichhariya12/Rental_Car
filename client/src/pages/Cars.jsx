@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../Context/AppContext';
 import CarCard from '../components/CarCard.jsx';
 import { Filter, SlidersHorizontal, Search, RotateCcw } from 'lucide-react';
 
 function Cars() {
   const { cars, fetchCar, isLoading } = useAppContext();
+  const location = useLocation();
+  const initialSearchLocation = location.state?.searchFilters?.location || '';
   const [filters, setFilters] = useState({
     category: 'All',
     fuel_type: '',
     minPrice: '',
     maxPrice: '',
     sortBy: 'newest',
-    location: ''
+    location: initialSearchLocation
   });
 
   const categories = ['All', 'Sedan', 'SUV', 'Luxury', 'Hatchback', 'Electric'];
@@ -34,9 +37,8 @@ function Cars() {
   };
 
   useEffect(() => {
-    // Debounce car fetching or just fetch on filter change
     fetchCar(filters);
-  }, [filters]);
+  }, [filters, fetchCar]);
 
   return (
     <div className='min-h-screen glow-bg pb-20'>

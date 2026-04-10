@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../Context/AppContext';
 import { toast } from 'react-hot-toast';
@@ -13,13 +14,14 @@ const AuthSuccess = () => {
     
     if (token) {
       localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setToken(token);
       
       // Fetch user data to update global state
       fetchUser().then(() => {
         toast.success("Successfully logged in with Google!");
         navigate('/');
-      }).catch((err) => {
+      }).catch(() => {
         toast.error("Failed to fetch user data after Google login");
         navigate('/');
       });

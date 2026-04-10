@@ -12,18 +12,26 @@ export const generateRefreshToken = (id) => {
   });
 };
 
+export const getAccessCookieOptions = () => ({
+  expires: new Date(Date.now() + 15 * 60 * 1000),
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+});
+
+export const getRefreshCookieOptions = () => ({
+  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+});
+
 export const sendTokens = (res, user, statusCode) => {
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
-  const cookieOptions = {
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  };
-
-  res.cookie('refreshToken', refreshToken, cookieOptions);
+  res.cookie('accessToken', accessToken, getAccessCookieOptions());
+  res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
 
   // Remove password from output
   user.password = undefined;

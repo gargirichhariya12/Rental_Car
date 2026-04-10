@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const CarCard = ({ car }) => {
+  void motion;
   const navigate = useNavigate();
 
   return (

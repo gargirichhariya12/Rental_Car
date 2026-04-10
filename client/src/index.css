@@ -3,7 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* Text Gradient */
 .gradient-text {
   background: linear-gradient(90deg, #A80000, #010DF3);
@@ -42,7 +41,6 @@
 
 .glow-bg {
   width: 100%;
-  
   background:
     radial-gradient(circle at 60% 40%, rgba(80, 90, 255, 0.6), transparent 60%),
     linear-gradient(135deg, #000000, #000000);

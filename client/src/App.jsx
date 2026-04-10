@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CarDetails from "./pages/CarDetails";
 import MyBooking from "./pages/MyBooking";
-import React, { useState } from 'react';
+import React from 'react';
 import Cars from './pages/Cars';
 import Layout from './pages/Owner/Layout';
 import Dashboard from './pages/Owner/Dashboard';
@@ -24,7 +24,8 @@ import { useAppContext } from './Context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function App() {
-  const { showLogin, setShowLogin, isOwner, isLoading } = useAppContext();
+  void motion;
+  const { showLogin, setShowLogin } = useAppContext();
   const location = useLocation();
   const isOwnerPath = location.pathname.startsWith('/owner');
   const isAdminPath = location.pathname.startsWith('/admin');
@@ -40,7 +41,7 @@ export default function App() {
     <>
       <Toaster position="top-center" reverseOrder={false} />
       {showLogin && !hideLayout && <Login setShowLogin={setShowLogin} />}
-      {!hideLayout && <Navbar setShowLogin={setShowLogin} />}
+      {!hideLayout && <Navbar />}
       
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>

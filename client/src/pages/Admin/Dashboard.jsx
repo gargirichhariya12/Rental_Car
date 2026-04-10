@@ -14,7 +14,7 @@ const AdminDashboard = () => {
       try {
         const { data } = await axios.get('/api/admin/stats');
         setStats(data.data);
-      } catch (error) {
+      } catch {
         toast.error('Failed to load admin stats');
       } finally {
         setLoading(false);
@@ -29,11 +29,19 @@ const AdminDashboard = () => {
     </div>
   );
 
+  if (!stats) {
+    return (
+      <div className='text-gray-400'>
+        Unable to load admin statistics right now.
+      </div>
+    );
+  }
+
   const statCards = [
     { name: 'Total Users', value: stats?.usersCount, icon: <Users className="text-blue-400" />, trend: '+12%' },
     { name: 'Active Cars', value: stats?.carsCount, icon: <Car className="text-emerald-400" />, trend: '+5%' },
     { name: 'Total Bookings', value: stats?.bookingsCount, icon: <CalendarCheck className="text-amber-400" />, trend: '+28%' },
-    { name: 'Total Revenue', value: `$${stats?.totalRevenue.toLocaleString()}`, icon: <TrendingUp className="text-indigo-400" />, trend: '+18%' },
+    { name: 'Total Revenue', value: `$${stats.totalRevenue.toLocaleString()}`, icon: <TrendingUp className="text-indigo-400" />, trend: '+18%' },
   ];
 
   return (

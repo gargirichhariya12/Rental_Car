@@ -2,9 +2,14 @@ import Hero from "../assets/Hero.png";
 import About from "./About";
 import FeatureBoard from "../components/FeatureBoard";
 import Banner from "../components/Banner";
+import SearchBar from "../components/Select";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
+  void motion;
+  const navigate = useNavigate();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -67,12 +72,25 @@ export default function Home() {
               variants={itemVariants}
               className="mt-10 flex gap-4"
             >
-              <button className="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 active:scale-95">
+              <button
+                onClick={() => navigate("/cars")}
+                className="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 active:scale-95"
+              >
                 Book Your Ride
               </button>
-              <button className="bg-white/10 backdrop-blur-md text-white px-8 py-4 border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all active:scale-95">
+              <button
+                onClick={() => navigate("/cars")}
+                className="bg-white/10 backdrop-blur-md text-white px-8 py-4 border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all active:scale-95"
+              >
                 View Fleet
               </button>
+            </motion.div>
+
+            <motion.div
+              variants={itemVariants}
+              className="mt-8 max-w-4xl"
+            >
+              <SearchBar />
             </motion.div>
           </div>
         </motion.div>
