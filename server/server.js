@@ -85,8 +85,9 @@ app.use('/api/owner', ownerRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/auth', authRouter);
 
-// Handle Unhandled Routes
-app.all('*', (req, res, next) => {
+// Handle unhandled routes.
+// Express 5 no longer accepts a bare "*" matcher here.
+app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
