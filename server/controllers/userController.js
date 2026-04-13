@@ -6,7 +6,9 @@ import { sendTokens } from "../utils/tokenUtils.js";
 
 // Register user
 export const registerUser = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const name = req.body.name?.trim();
+  const email = req.body.email?.trim().toLowerCase();
+  const { password } = req.body;
 
   if (!name || !email || !password || password.length < 8) {
     return next(new AppError("Please provide all required fields correctly (password min 8 chars)", 400));
@@ -21,7 +23,12 @@ export const registerUser = catchAsync(async (req, res, next) => {
   // but here it was manual in the old code. We'll stick to manual for consistency 
   // or add a pre-save hook. Let's stick to manual for now but use bcrypt.
   // Actually, I'll add bcrypt hash here as before.
-  const user = await User.create({ name, email, password, role });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role: "user",
+  });
 
   sendTokens(res, user, 201);
 });
