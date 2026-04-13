@@ -14,7 +14,8 @@ const router = express.Router();
 //  Start Google Login
 router.get("/google",
   passport.authenticate("google", {
-    scope: ["profile", "email"]
+    scope: ["profile", "email"],
+    prompt: "select_account"
   })
 );
 
@@ -25,19 +26,15 @@ router.get("/google/callback",
     session: false // We use JWTs, not sessions for the app itself, but passport might need it for OAuth
   }),
   (req, res) => {
-    // 1) Generate Tokens
     const accessToken = generateAccessToken(req.user._id);
     const refreshToken = generateRefreshToken(req.user._id);
 
-    // 2) Set Tokens in Cookies
     res.cookie('accessToken', accessToken, getAccessCookieOptions());
     res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
 
-    // 3) Redirect to frontend with accessToken (or frontend can fetch it via a separate endpoint)
-    // For production, it's safer to redirect to a page that fetches the token or pass it securely.
-    // Here we'll redirect to a dashboard with the token as a query param (common for simple logic)
-    // or better, a specialized callback page.
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/auth-success?token=${accessToken}`);
+    res.redirect(
+      `${process.env.CLIENT_URL || "http://localhost:5173"}/auth-success?token=${encodeURIComponent(accessToken)}`
+    );
   }
 );
 

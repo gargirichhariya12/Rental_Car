@@ -6,15 +6,14 @@ import { sendTokens } from "../utils/tokenUtils.js";
 
 // Register user
 export const registerUser = catchAsync(async (req, res, next) => {
-  const name = req.body.name?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const { password } = req.body;
+  const { name, email, password, role } = req.body;
+  const normalizedEmail = email?.toLowerCase().trim();
 
-  if (!name || !email || !password || password.length < 8) {
+  if (!name?.trim() || !normalizedEmail || !password || password.length < 8) {
     return next(new AppError("Please provide all required fields correctly (password min 8 chars)", 400));
   }
 
-  const userExists = await User.findOne({ email });
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     return next(new AppError("User already exists with this email", 400));
   }
@@ -24,10 +23,10 @@ export const registerUser = catchAsync(async (req, res, next) => {
   // or add a pre-save hook. Let's stick to manual for now but use bcrypt.
   // Actually, I'll add bcrypt hash here as before.
   const user = await User.create({
-    name,
-    email,
+    name: name.trim(),
+    email: normalizedEmail,
     password,
-    role: "user",
+    role: role === "owner" ? "owner" : "user"
   });
 
   sendTokens(res, user, 201);
@@ -36,12 +35,13 @@ export const registerUser = catchAsync(async (req, res, next) => {
 // Login user
 export const loginUser = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  const normalizedEmail = email?.toLowerCase().trim();
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return next(new AppError("Please provide email and password", 400));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email: normalizedEmail }).select("+password");
   if (!user || !(await user.comparePassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
   }

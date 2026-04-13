@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import React from "react";
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
+import { LogOut, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
 import { useAppContext } from '../Context/AppContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   void motion;
@@ -68,7 +67,7 @@ export default function Navbar() {
       animate="visible"
       variants={navVariants}
       className={`w-full px-4 py-4 sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 py-3" : "bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900"
+        scrolled ? "bg-black  backdrop-blur-xl border-b border-zinc-800 py-3" : "bg-black backdrop-blur-md border-b border-zinc-900"
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -84,7 +83,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-full px-4 py-1.5 backdrop-blur-md shadow-lg shadow-black/20">
+        <div className="hidden md:flex items-center gap-1 bg-black border border-zinc-800 rounded-full px-4 py-1.5 backdrop-blur-md shadow-lg shadow-black/20">
           {menuLinks.map((link, index) => (
             <Link
               key={index}

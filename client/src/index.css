@@ -3,6 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 /* Text Gradient */
 .gradient-text {
   background: linear-gradient(90deg, #A80000, #010DF3);
