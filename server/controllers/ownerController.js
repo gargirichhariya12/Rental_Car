@@ -4,6 +4,8 @@ import Booking from "../models/Booking.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import CarService from "../services/CarService.js";
+import imageKit from "../configs/imagekit.js";
+import fs from "fs";
 
 export const changeRoleToOwner = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
@@ -122,10 +124,34 @@ export const getDashboardData = catchAsync(async (req, res, next) => {
 // API to update user image
 export const updateUserImage = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
-  // This would use a User service normally
-  // For now, keep it simple but refactored
-  // (Assuming imageKit upload logic is similar to car upload)
-  
-  // TO DO: Refactor into a FileService or similar
-  res.status(200).json({ message: "Update logic to be implemented with FileService" });
+
+  if (!req.file) {
+    return next(new AppError("Image file is required", 400));
+  }
+
+  const fileBuffer = fs.readFileSync(req.file.path);
+  const uploadResponse = await imageKit.upload({
+    file: fileBuffer,
+    fileName: `user-${_id}-${Date.now()}`,
+    folder: "/users",
+  });
+
+  fs.unlinkSync(req.file.path);
+
+  const imageUrl = imageKit.url({
+    path: uploadResponse.filePath,
+    transformation: [{ width: 400, quality: "auto", format: "webp" }],
+  });
+
+  const user = await User.findByIdAndUpdate(
+    _id,
+    { image: imageUrl },
+    { new: true, runValidators: true }
+  ).select("-password");
+
+  res.status(200).json({
+    status: "success",
+    message: "Profile image updated successfully",
+    data: { user },
+  });
 });

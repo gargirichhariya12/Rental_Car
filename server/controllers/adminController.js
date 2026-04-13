@@ -36,6 +36,18 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
+export const getAllCars = catchAsync(async (req, res, next) => {
+  const cars = await Car.find()
+    .populate('owner', 'name email')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    status: 'success',
+    results: cars.length,
+    data: { cars }
+  });
+});
+
 export const updateUserRole = catchAsync(async (req, res, next) => {
   const { userId, role } = req.body;
 
