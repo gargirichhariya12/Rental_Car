@@ -47,3 +47,32 @@
     radial-gradient(circle at 60% 40%, rgba(80, 90, 255, 0.6), transparent 60%),
     linear-gradient(135deg, #000000, #000000);
 }
+
+.date-input {
+  color-scheme: dark;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) opacity(0);
+  position: relative;
+  z-index: 2;
+}
+
+.date-input::-webkit-datetime-edit,
+.date-input::-webkit-datetime-edit-fields-wrapper,
+.date-input::-webkit-datetime-edit-text,
+.date-input::-webkit-datetime-edit-month-field,
+.date-input::-webkit-datetime-edit-day-field,
+.date-input::-webkit-datetime-edit-year-field {
+  color: #ffffff;
+}
+
+.date-input::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.5em;
+}
+
+.date-input:invalid {
+  color: #9ca3af;
+}

@@ -3,6 +3,7 @@ import About from "./About";
 import FeatureBoard from "../components/FeatureBoard";
 import Banner from "../components/Banner";
 import SearchBar from "../components/Select";
+import Button from "../components/Button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -72,18 +73,22 @@ export default function Home() {
               variants={itemVariants}
               className="mt-10 flex gap-4"
             >
-              <button
+              <Button
                 onClick={() => navigate("/cars")}
-                className="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 active:scale-95"
+                variant="primary"
+                size="lg"
+                className="bg-red-600 shadow-xl shadow-red-600/20 hover:bg-red-700"
               >
                 Book Your Ride
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => navigate("/cars")}
-                className="bg-white/10 backdrop-blur-md text-white px-8 py-4 border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all active:scale-95"
+                variant="secondary"
+                size="lg"
+                className="backdrop-blur-md"
               >
                 View Fleet
-              </button>
+              </Button>
             </motion.div>
 
             <motion.div

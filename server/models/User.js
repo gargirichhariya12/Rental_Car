@@ -30,11 +30,6 @@ userSchema.pre("save", async function () {
 userSchema.methods.comparePassword = async function(candidatePassword, userPassword = this.password) {
     if (!userPassword) return false;
 
-    // Support legacy plain-text records until they are updated.
-    if (!userPassword.startsWith("$2")) {
-        return candidatePassword === userPassword;
-    }
-
     return await bcrypt.compare(candidatePassword, userPassword);
 };
 

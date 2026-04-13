@@ -4,6 +4,8 @@ import { Users, Car, CalendarCheck, TrendingUp, ArrowUpRight } from 'lucide-reac
 import { toast } from 'react-hot-toast';
 
 import { CardSkeleton } from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
+import Panel from '../../components/Panel';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -31,9 +33,11 @@ const AdminDashboard = () => {
 
   if (!stats) {
     return (
-      <div className='text-gray-400'>
-        Unable to load admin statistics right now.
-      </div>
+      <EmptyState
+        icon={TrendingUp}
+        title='Admin statistics unavailable'
+        description='We could not load platform analytics right now. Please try again in a moment.'
+      />
     );
   }
 
@@ -53,7 +57,7 @@ const AdminDashboard = () => {
 
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12'>
         {statCards.map((card) => (
-          <div key={card.name} className='bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl hover:border-gray-700 transition-colors'>
+          <Panel key={card.name} rounded='rounded-2xl' className='shadow-xl transition-colors hover:border-gray-700'>
             <div className='flex items-center justify-between mb-4'>
               <div className='p-3 bg-gray-800 rounded-xl'>{card.icon}</div>
               <span className='text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full flex items-center gap-1'>
@@ -62,18 +66,18 @@ const AdminDashboard = () => {
             </div>
             <p className='text-gray-400 text-sm font-medium'>{card.name}</p>
             <h2 className='text-2xl font-bold mt-1'>{card.value}</h2>
-          </div>
+          </Panel>
         ))}
       </div>
 
       <div className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
         {/* Placeholder for charts or recent activity */}
-        <div className='bg-gray-900 border border-gray-800 p-8 rounded-3xl h-80 flex items-center justify-center'>
+        <Panel className='flex h-80 items-center justify-center' padding='p-8'>
           <p className='text-gray-500 italic'>Revenue Growth Chart (Upcoming)</p>
-        </div>
-        <div className='bg-gray-900 border border-gray-800 p-8 rounded-3xl h-80 flex items-center justify-center'>
+        </Panel>
+        <Panel className='flex h-80 items-center justify-center' padding='p-8'>
           <p className='text-gray-500 italic'>Recent Platform Activity (Upcoming)</p>
-        </div>
+        </Panel>
       </div>
     </div>
   );

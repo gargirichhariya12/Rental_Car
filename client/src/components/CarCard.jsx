@@ -6,6 +6,10 @@ import { motion } from 'framer-motion';
 const CarCard = ({ car }) => {
   void motion;
   const navigate = useNavigate();
+  const currency = import.meta.env.VITE_CURRENCY || '$';
+  const ratingLabel = typeof car.averageRating === 'number' && car.averageRating > 0
+    ? car.averageRating.toFixed(1)
+    : 'New';
 
   return (
     <motion.div
@@ -38,7 +42,7 @@ const CarCard = ({ car }) => {
         {/* Price Badge */}
         <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-2xl shadow-xl">
           <span className="text-xs text-gray-400 font-medium">From </span>
-          <span className="text-lg font-bold">${car.pricePerDay}</span>
+          <span className="text-lg font-bold">{currency}{car.pricePerDay}</span>
           <span className="text-xs text-gray-400">/day</span>
         </div>
       </div>
@@ -56,7 +60,7 @@ const CarCard = ({ car }) => {
           </div>
           <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg">
             <Star size={14} fill="currentColor" />
-            <span className="text-sm font-bold">{car.averageRating?.toFixed(1) || "5.0"}</span>
+            <span className="text-sm font-bold">{ratingLabel}</span>
           </div>
         </div>
 

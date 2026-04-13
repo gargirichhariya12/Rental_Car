@@ -85,9 +85,12 @@ export const getOwnerBooking = catchAsync(async (req, res, next) => {
     .populate('car user')
     .sort({ createdAt: -1 });
 
+  const validBookings = bookings.filter((booking) => booking.car && booking.user);
+
   res.status(200).json({
     status: "success",
-    data: { bookings }
+    results: validBookings.length,
+    data: { bookings: validBookings }
   });
 });
 
@@ -96,11 +99,33 @@ export const changeBookingStatus = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
   const { bookingId, status } = req.body;
 
+  const allowedStatuses = ["confirmed", "cancelled", "completed"];
+
+  if (!bookingId || !status) {
+    return next(new AppError("Booking id and status are required", 400));
+  }
+
+  if (!allowedStatuses.includes(status)) {
+    return next(new AppError("Invalid booking status", 400));
+  }
+
   const booking = await Booking.findById(bookingId);
   if (!booking) return next(new AppError("Booking not found", 404));
 
   if (booking.owner.toString() !== _id.toString()) {
     return next(new AppError("You do not have permission to manage this booking", 403));
+  }
+
+  if (booking.status === "cancelled") {
+    return next(new AppError("Cancelled bookings cannot be updated", 400));
+  }
+
+  if (booking.status === "completed" && status !== "completed") {
+    return next(new AppError("Completed bookings cannot be changed", 400));
+  }
+
+  if (status === "completed" && booking.paymentStatus !== "paid") {
+    return next(new AppError("Only paid bookings can be marked as completed", 400));
   }
 
   booking.status = status;

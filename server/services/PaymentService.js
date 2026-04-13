@@ -2,13 +2,24 @@ import Stripe from 'stripe';
 import Booking from '../models/Booking.js';
 import AppError from '../utils/AppError.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripeClient = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new AppError('Stripe is not configured on the server', 503);
+  }
+
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 class PaymentService {
   async createCheckoutSession(bookingId, userId) {
     const booking = await Booking.findById(bookingId).populate('car user');
     if (!booking) throw new AppError('Booking not found', 404);
     if (booking.user._id.toString() !== userId.toString()) throw new AppError('Unauthorized', 403);
+    if (!booking.car) throw new AppError('Car not found for this booking', 404);
+    if (booking.paymentStatus === 'paid') throw new AppError('This booking has already been paid', 400);
+    if (booking.status === 'cancelled') throw new AppError('Cancelled bookings cannot be paid', 400);
+
+    const stripe = getStripeClient();
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -39,6 +50,11 @@ class PaymentService {
   async handleWebhook(signature, payload) {
     let event;
     try {
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        throw new AppError('Stripe webhook is not configured on the server', 503);
+      }
+
+      const stripe = getStripeClient();
       event = stripe.webhooks.constructEvent(
         payload,
         signature,

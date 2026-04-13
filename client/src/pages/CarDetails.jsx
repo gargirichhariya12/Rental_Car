@@ -3,6 +3,8 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import Loader from '../components/Loader';
+import DateInput from '../components/DateInput';
+import Button from '../components/Button';
 import { useAppContext } from '../Context/AppContext';
 import { ArrowLeft, Fuel, Car, User, MapPin, BadgeCheck } from 'lucide-react';
 
@@ -67,10 +69,14 @@ function CarDetails() {
   return (
     <div className='glow-bg min-h-screen p-6 md:p-10'>
       <div className='max-w-7xl mx-auto'>
-        <button onClick={() => navigate(-1)} className='flex items-center gap-2 mb-6 text cursor-pointer gradient-border px-4 py-3 bg-black/40 rounded-xl'>
-          <ArrowLeft />
+        <Button
+          onClick={() => navigate(-1)}
+          variant='secondary'
+          className='mb-6 gradient-border bg-black/40 text'
+          startIcon={<ArrowLeft />}
+        >
           Back to all cars
-        </button>
+        </Button>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12'>
           <div className='lg:col-span-2'>
@@ -125,38 +131,34 @@ function CarDetails() {
             </p>
             <hr className='border-borderColor my-6' />
 
-            <div className='flex flex-col gap-2 text'>
-              <label htmlFor='pickup-date'>Pickup Date</label>
-              <input
-                type="date"
-                className='border border-gray-700 bg-black/40 px-3 py-2 rounded-lg text-white'
-                required
-                id='pickup-date'
-                min={new Date().toISOString().split('T')[0]}
-                value={bookingDates.pickupDate}
-                onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, pickupDate: e.target.value }))}
-              />
-            </div>
+            <DateInput
+              id='pickup-date'
+              label='Pickup Date'
+              min={new Date().toISOString().split('T')[0]}
+              value={bookingDates.pickupDate}
+              onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, pickupDate: e.target.value }))}
+              required
+              className='text'
+            />
 
-            <div className='flex flex-col gap-2 text'>
-              <label htmlFor='return-date'>Return Date</label>
-              <input
-                type="date"
-                className='border border-gray-700 bg-black/40 px-3 py-2 rounded-lg text-white'
-                required
-                id='return-date'
-                min={bookingDates.pickupDate || new Date().toISOString().split('T')[0]}
-                value={bookingDates.returnDate}
-                onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, returnDate: e.target.value }))}
-              />
-            </div>
-            <button
+            <DateInput
+              id='return-date'
+              label='Return Date'
+              min={bookingDates.pickupDate || new Date().toISOString().split('T')[0]}
+              value={bookingDates.returnDate}
+              onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, returnDate: e.target.value }))}
+              required
+              className='text'
+            />
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className='w-full bg-blue-600 hover:bg-blue-700 py-3 transition-all font-medium text-white rounded-xl cursor-pointer disabled:opacity-60'
+              fullWidth
+              variant='primary'
+              className='bg-blue-600 font-medium hover:bg-blue-700'
             >
               {isSubmitting ? 'Booking...' : 'Book Now'}
-            </button>
+            </Button>
             <p className='text-center text text-sm'>No credit card required to reserve</p>
           </form>
         </div>

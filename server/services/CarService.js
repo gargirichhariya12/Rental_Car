@@ -33,11 +33,11 @@ class CarService {
   }
 
   async getOwnerCars(ownerId) {
-    return await Car.find({ owner: ownerId });
+    return await Car.find({ owner: ownerId, isDeleted: false });
   }
 
   async getAllCars(filters = {}) {
-    const query = { isAvailable: true };
+    const query = { isAvailable: true, isDeleted: false };
     
     if (filters.location) query.location = new RegExp(filters.location, 'i');
     if (filters.category && filters.category !== 'All') query.category = filters.category;
@@ -61,7 +61,7 @@ class CarService {
 
   async getCarById(id) {
     const car = await Car.findById(id).populate('owner', 'name email image');
-    if (!car) throw new AppError("Car not found", 404);
+    if (!car || car.isDeleted) throw new AppError("Car not found", 404);
     return car;
   }
 }

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import Title from "../../components/Owner/Title";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
+import EmptyState from '../../components/EmptyState';
 
 const ManageCar = () => {
   const currency = import.meta.env.VITE_CURRENCY
@@ -34,9 +35,9 @@ const ManageCar = () => {
 
   const removeCar = async (carId) => {
     try {
-      const { data } = await axios.post('/api/owner/delete-car', { carId });
+      const { data } = await axios.delete(`/api/owner/cars/${carId}`);
       if (data.status === 'success') {
-        toast.success("Car removed from listings");
+        toast.success(data.message || "Car deleted successfully");
         setCars((currentCars) => currentCars.filter((car) => car._id !== carId));
       }
     } catch (error) {
@@ -55,6 +56,14 @@ const ManageCar = () => {
     <div className='px-4 pt-10 md:px-10 w-full'>
       <Title title='Manage Cars' subTitle='View all listed cars, update their details, or remove them from the booking platform' />
 
+      {cars.length === 0 ? (
+        <div className='mt-6'>
+          <EmptyState
+            title='No cars in your fleet yet'
+            description='Add your first car to start receiving bookings.'
+          />
+        </div>
+      ) : (
       <div className=' w-full rounded-md overflow-hidden border border-gray-300 mt-6'>
 
         <table className='w-full border border-collapse text-left text-sm text'>
@@ -96,6 +105,7 @@ const ManageCar = () => {
         </table>
 
       </div>
+      )}
 
     </div>
   )

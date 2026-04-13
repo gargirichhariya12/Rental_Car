@@ -5,6 +5,7 @@ import { Car, List, TriangleAlert, ListCheck , Calendar} from 'lucide-react'
 import Title from '../../components/Owner/Title'
 import StatCard from '../../components/Owner/StatCard'
 import StatusBadge from '../../components/StatusBadge'
+import EmptyState from '../../components/EmptyState'
 
 function Dashboard() {
   const [data, setData] = useState({
@@ -65,7 +66,7 @@ function Dashboard() {
         <p className="text-gray-400 text-sm mb-4">Latest customer bookings</p>
 
         <div className="space-y-4">
-          {recentBookings.map((item, index) => (
+          {recentBookings.length > 0 ? recentBookings.map((item, index) => (
             <div key={index} className="flex items-center justify-between">
               
               <div className="flex items-center gap-3">
@@ -92,7 +93,13 @@ function Dashboard() {
                 />
               </div>
             </div>
-          ))}
+          )) : (
+            <EmptyState
+              title='No recent bookings'
+              description='Fresh reservations will appear here as customers book your cars.'
+              className='border-white/10 bg-black/20 py-10'
+            />
+          )}
         </div>
       </div>
 

@@ -4,16 +4,27 @@ import { toast } from 'react-hot-toast';
 import { useAppContext } from '../Context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Chrome, ChevronRight, X } from 'lucide-react';
+import Button from './Button';
+import Input from './Input';
+import Modal from './Modal';
 
 const Login = ({ setShowLogin }) => {
   void motion;
-  const { setToken, setUser, setIsOwner, fetchUser } = useAppContext();
+  const {
+    setToken,
+    setUser,
+    setIsOwner,
+    fetchUser,
+    setShowLogin: setShowLoginFromContext,
+  } = useAppContext();
   const [state, setState] = useState("login");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: ""
   });
+  const closeModal = () => (setShowLogin || setShowLoginFromContext)(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,9 +32,18 @@ const Login = ({ setShowLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+
     try {
+      setIsSubmitting(true);
       const url = state === "login" ? "/api/user/login" : "/api/user/register";
-      const { data } = await axios.post(url, formData);
+      const payload = {
+        ...formData,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+      };
+      const { data } = await axios.post(url, payload);
 
       if (data.status === 'success') {
         const accessToken = data.accessToken;
@@ -40,51 +60,29 @@ const Login = ({ setShowLogin }) => {
           await fetchUser();
         }
 
-        setShowLogin(false);
+        closeModal();
         toast.success(state === "login" ? "Welcome back!" : "Account created successfully");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Authentication failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleGoogleLogin = () => {
+    if (isSubmitting) return;
     window.location.href = `${import.meta.env.VITE_BASE_URL}/auth/google`;
   };
 
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.9, y: 20 },
-    visible: { 
-      opacity: 1, 
-      scale: 1, 
-      y: 0,
-      transition: { type: "spring", damping: 25, stiffness: 300 }
-    },
-    exit: { opacity: 0, scale: 0.9, y: 20 }
-  };
-
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={() => setShowLogin(false)} 
-      className='fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm'
-    >
-      <motion.div
-        variants={modalVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        onClick={(e) => e.stopPropagation()}
-        className="sm:w-[450px] w-full bg-gray-900 border border-white/10 rounded-[32px] p-8 md:p-10 shadow-2xl relative overflow-hidden"
-      >
+    <Modal onClose={closeModal}>
         {/* Background Glow */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 blur-[80px] rounded-full" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-red-600/10 blur-[80px] rounded-full" />
 
         <button 
-          onClick={() => setShowLogin(false)}
+          onClick={closeModal}
           className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
         >
           <X size={20} />
@@ -111,63 +109,61 @@ const Login = ({ setShowLogin }) => {
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
                   <User size={18} />
                 </div>
-                <input
+                <Input
                   type="text"
                   name="name"
                   placeholder="Full Name"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
+                  className="py-3.5 pr-4"
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  icon={<User size={18} />}
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-              <Mail size={18} />
-            </div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <Input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            className="py-3.5 pr-4"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            icon={<Mail size={18} />}
+          />
 
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-              <Lock size={18} />
-            </div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-all"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <Input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="py-3.5 pr-4"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            icon={<Lock size={18} />}
+          />
 
           {state === "login" && (
             <div className="flex justify-end">
-              <button type="button" className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">
+              <Button type="button" variant="link" className="text-xs font-semibold">
                 Forgot password?
-              </button>
+              </Button>
             </div>
           )}
 
-          <button 
+          <Button
             type="submit" 
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+            disabled={isSubmitting}
+            fullWidth
+            variant="primary"
+            size="lg"
+            className="mt-4"
+            endIcon={<ChevronRight size={18} />}
           >
-            {state === "login" ? "Sign In" : "Get Started"} <ChevronRight size={18} />
-          </button>
+            {isSubmitting ? "Please wait..." : state === "login" ? "Sign In" : "Get Started"}
+          </Button>
         </form>
 
         <div className="relative my-8">
@@ -179,26 +175,33 @@ const Login = ({ setShowLogin }) => {
           </div>
         </div>
 
-        <button
+        <Button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full bg-white text-black font-bold py-3.5 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5"
+          disabled={isSubmitting}
+          fullWidth
+          variant="light"
+          size="md"
+          startIcon={<Chrome size={20} className="text-red-500" />}
         >
-          <Chrome size={20} className="text-red-500" />
           Continue with Google
-        </button>
+        </Button>
 
         <p className="text-center text-sm text-gray-500 mt-8">
           {state === "login" ? "No account yet?" : "Already a member?"}
-          <button
-            onClick={() => setState(prev => (prev === "login" ? "register" : "login"))}
-            className="ml-1 text-indigo-400 font-bold hover:underline"
+          <Button
+            type="button"
+            onClick={() => {
+              setState((prev) => (prev === "login" ? "register" : "login"));
+              setFormData({ name: "", email: "", password: "" });
+            }}
+            variant="link"
+            className="ml-1 font-bold hover:underline"
           >
             {state === "login" ? "Create Account" : "Sign In"}
-          </button>
+          </Button>
         </p>
-      </motion.div>
-    </motion.div>
+    </Modal>
   );
 };
 

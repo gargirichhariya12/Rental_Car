@@ -4,25 +4,32 @@ import Heading from './Heading';
 
 function Banner() {
   return (
-    <div className='flex flex-row bg-black px-16 py-8 pb-16  h-80'>
-        <div className='w-1/2 h-full relative pl-4'>
-            <img src={banner01} alt="Banner" className="w-full h-full object-cover" />
+    <section className='bg-black px-6 pb-16 md:px-10'>
+      <div className='mx-auto grid max-w-7xl items-center gap-8 rounded-[36px] border border-white/10 bg-white/[0.03] p-6 md:p-8 lg:grid-cols-[1.2fr_0.8fr]'>
+        <div className='relative overflow-hidden rounded-[28px]'>
+          <img src={banner01} alt="Banner" className="h-[280px] w-full object-cover md:h-[360px]" />
         </div>
-        <div className='w-1/2 flex flex-col justify-center items-center text-white  p-4'>
-            <Heading heading="Unmatched Performance" className="mb-4" />
-
-           <div className = "text-[#AEB7ED] gradient-border p-4  w-1/2  items-center justify-center rounded-lg">
-            <ul className='list-disc px-4'>
-                <li>0–100 km/h in ~3s</li>
-                <li>Dual-Motor AWD</li>
-                <li>Instant Electric Torque</li>
-                <li>Precision Handling</li>
+        <div className='flex flex-col justify-center text-white'>
+          <Heading
+            heading="Unmatched Performance"
+            className="mb-6"
+            titleClassName="text-left text-3xl md:text-4xl"
+            underlineClassName="mx-0"
+          />
+          <p className='mb-6 max-w-xl text-sm leading-7 text-[#AEB7ED] md:text-base'>
+            Feel instant torque, refined handling, and premium cabin control in a vehicle built to turn every trip into a statement.
+          </p>
+          <div className="gradient-border max-w-xl rounded-2xl p-4 text-[#AEB7ED]">
+            <ul className='grid gap-3 sm:grid-cols-2'>
+              <li>0-100 km/h in ~3s</li>
+              <li>Dual-Motor AWD</li>
+              <li>Instant Electric Torque</li>
+              <li>Precision Handling</li>
             </ul>
-           </div>
-                                                                          
+          </div>
         </div>
-      
-    </div>
+      </div>
+    </section>
   )
 }
 

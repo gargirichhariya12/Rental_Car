@@ -1,6 +1,7 @@
 import logo from "../assets/logo.png";
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import Button from "./Button";
 
 const Footer = () => {
   const navLinks = [
@@ -8,6 +9,13 @@ const Footer = () => {
     { label: "Fleet", to: "/cars" },
     { label: "Reservations", to: "/my-bookings" },
   ];
+  const socialIcons = [
+    { label: "Facebook", Icon: Facebook },
+    { label: "Twitter", Icon: Twitter },
+    { label: "Instagram", Icon: Instagram },
+    { label: "LinkedIn", Icon: Linkedin },
+  ];
+  const supportLinks = ['Help Center', 'Terms of Use', 'Privacy Policy', 'Insurance'];
 
   return (
     <footer className="bg-black border-t border-white/5 pt-20 pb-10">
@@ -23,11 +31,20 @@ const Footer = () => {
               Experience the pinnacle of automotive excellence. We provide a curated collection of world-class vehicles for discerning drivers who value precision, luxury, and unmatched performance.
             </p>
             <div className="flex gap-4">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all">
-                  <Icon size={18} />
-                </a>
-              ))}
+              {socialIcons.map((item) => {
+                const IconComponent = item.Icon;
+
+                return (
+                <button
+                  key={item.label}
+                  type="button"
+                  aria-label={item.label}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-400 transition-all hover:border-red-600 hover:bg-red-600 hover:text-white"
+                >
+                  <IconComponent size={18} />
+                </button>
+                );
+              })}
             </div>
           </div>
 
@@ -50,9 +67,9 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <h3 className="text-white font-bold mb-6 tracking-wide uppercase text-xs">Support</h3>
             <ul className="space-y-4">
-              {['Help Center', 'Terms of Use', 'Privacy Policy', 'Insurance'].map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-gray-500 hover:text-white text-sm transition-colors">{item}</a>
+              {supportLinks.map((item) => (
+                <li key={item} className="text-gray-500 text-sm transition-colors hover:text-white">
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
@@ -68,9 +85,9 @@ const Footer = () => {
                 placeholder="Email address" 
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-red-600 outline-none transition-all"
               />
-              <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-95">
+              <Button variant="primary" size="md" className="bg-red-600 text-sm hover:bg-red-700">
                 Join
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { CarFront, MapPin, UserRound } from 'lucide-react';
 import { TableSkeleton } from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
+import Panel from '../../components/Panel';
 
 const AdminCars = () => {
   const [cars, setCars] = useState([]);
@@ -27,6 +29,16 @@ const AdminCars = () => {
     return <TableSkeleton rows={6} />;
   }
 
+  if (cars.length === 0) {
+    return (
+      <EmptyState
+        icon={CarFront}
+        title='No cars listed yet'
+        description='Cars from owners will appear here once they are added to the platform.'
+      />
+    );
+  }
+
   return (
     <div>
       <div className='mb-8'>
@@ -36,7 +48,7 @@ const AdminCars = () => {
 
       <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
         {cars.map((car) => (
-          <div key={car._id} className='rounded-3xl border border-gray-800 bg-gray-900 overflow-hidden'>
+          <Panel key={car._id} className='overflow-hidden' padding='p-0'>
             <img src={car.image} alt={`${car.brand} ${car.model}`} className='h-56 w-full object-cover' />
 
             <div className='p-6'>
@@ -68,7 +80,7 @@ const AdminCars = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Panel>
         ))}
       </div>
     </div>

@@ -20,6 +20,7 @@ import AdminCars from './pages/Admin/Cars';
 
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 import AuthSuccess from './pages/AuthSuccess';
 import { Toaster } from 'react-hot-toast';
 import { toast } from 'react-hot-toast';
@@ -40,6 +41,18 @@ export default function App() {
     animate: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: 10 },
   };
+
+  const renderAnimatedPage = (page) => (
+    <motion.div
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageVariants}
+      transition={{ duration: 0.3 }}
+    >
+      {page}
+    </motion.div>
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -75,33 +88,35 @@ export default function App() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={
-            <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-              <Home />
-            </motion.div>
+            <PublicRoute>
+              {renderAnimatedPage(<Home />)}
+            </PublicRoute>
           } />
           <Route path="/about" element={
-            <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-              <About />
-            </motion.div>
+            <PublicRoute>
+              {renderAnimatedPage(<About />)}
+            </PublicRoute>
           } />
-          <Route path="/auth-success" element={<AuthSuccess />} />
+          <Route path="/auth-success" element={
+            <PublicRoute>
+              <AuthSuccess />
+            </PublicRoute>
+          } />
           <Route path='/cars' element={
-            <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-              <Cars />
-            </motion.div>
+            <PublicRoute>
+              {renderAnimatedPage(<Cars />)}
+            </PublicRoute>
           } />
           <Route path='/CarDetails/:id' element={
-            <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-              <CarDetails />
-            </motion.div>
+            <PublicRoute>
+              {renderAnimatedPage(<CarDetails />)}
+            </PublicRoute>
           } />
 
           {/* User Protected Routes */}
           <Route path='/my-bookings' element={
-            <ProtectedRoute>
-              <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-                <MyBooking />
-              </motion.div>
+            <ProtectedRoute redirectTo="/">
+              {renderAnimatedPage(<MyBooking />)}
             </ProtectedRoute>
           } />
 

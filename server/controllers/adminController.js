@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.js';
 
 export const getStats = catchAsync(async (req, res, next) => {
   const usersCount = await User.countDocuments();
-  const carsCount = await Car.countDocuments();
+  const carsCount = await Car.countDocuments({ isDeleted: false });
   const bookingsCount = await Booking.countDocuments();
   
   // Calculate total revenue
@@ -37,7 +37,7 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
 });
 
 export const getAllCars = catchAsync(async (req, res, next) => {
-  const cars = await Car.find()
+  const cars = await Car.find({ isDeleted: false })
     .populate('owner', 'name email')
     .sort({ createdAt: -1 });
 
@@ -50,6 +50,10 @@ export const getAllCars = catchAsync(async (req, res, next) => {
 
 export const updateUserRole = catchAsync(async (req, res, next) => {
   const { userId, role } = req.body;
+
+  if (!userId || !role) {
+    return next(new AppError('User id and role are required', 400));
+  }
 
   if (!['admin', 'owner', 'user'].includes(role)) {
     return next(new AppError('Invalid role', 400));

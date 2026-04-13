@@ -3,6 +3,8 @@ import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAppContext } from "../Context/AppContext";
+import DateInput from "./DateInput";
+import Button from "./Button";
 
 export default function SearchBar({ className = "", submitLabel = "Search Cars" }) {
   const navigate = useNavigate();
@@ -52,43 +54,33 @@ export default function SearchBar({ className = "", submitLabel = "Search Cars" 
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="pickup-date" className="text-sm font-semibold text-white">
-              Pickup Date
-            </label>
-            <input
-              type="date"
-              id="pickup-date"
-              min={new Date().toISOString().split("T")[0]}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-red-500"
-              value={pickUpDate}
-              onChange={(e) => setPickUpDate(e.target.value)}
-              required
-            />
-          </div>
+          <DateInput
+            id="pickup-date"
+            label="Pickup Date"
+            min={new Date().toISOString().split("T")[0]}
+            value={pickUpDate}
+            onChange={(e) => setPickUpDate(e.target.value)}
+            required
+          />
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="return-date" className="text-sm font-semibold text-white">
-              Return Date
-            </label>
-            <input
-              type="date"
-              id="return-date"
-              min={pickUpDate || new Date().toISOString().split("T")[0]}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-red-500"
-              value={returnDate}
-              onChange={(e) => setReturnDate(e.target.value)}
-              required
-            />
-          </div>
+          <DateInput
+            id="return-date"
+            label="Return Date"
+            min={pickUpDate || new Date().toISOString().split("T")[0]}
+            value={returnDate}
+            onChange={(e) => setReturnDate(e.target.value)}
+            required
+          />
         </div>
 
-        <button
+        <Button
           type="submit"
-          className="flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-6 py-3 text-white font-semibold hover:bg-red-700 transition-colors"
+          variant="primary"
+          className="bg-red-600 font-semibold hover:bg-red-700"
+          endIcon={<Search size={18} />}
         >
-          {submitLabel} <Search size={18} />
-        </button>
+          {submitLabel}
+        </Button>
       </form>
     </div>
   );

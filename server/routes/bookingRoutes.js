@@ -4,6 +4,10 @@ import { changeBookingStatus, checkAvailabilityOfCar, createBooking, getOwnerBoo
 
 const bookingRouter = express.Router();
 
+bookingRouter.get('/check-availability', (req, res, next) => {
+  req.body = { ...req.query };
+  next();
+}, checkAvailabilityOfCar);
 bookingRouter.post('/check-availability', checkAvailabilityOfCar);
 
 // Publicly accessible for logged in users

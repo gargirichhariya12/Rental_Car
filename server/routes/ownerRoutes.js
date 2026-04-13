@@ -13,9 +13,16 @@ ownerRouter.use(restrictTo('owner', 'admin'));
 
 ownerRouter.post('/add-car', upload.single('image'), addCar);
 ownerRouter.get('/cars', getOwnerCar);
+ownerRouter.delete('/cars/:carId', deleteCar);
+ownerRouter.patch('/cars/:carId/availability', (req, res, next) => {
+  req.body.carId = req.params.carId;
+  next();
+}, toggleCarAvailability);
 ownerRouter.post('/toggle-car', toggleCarAvailability);
 ownerRouter.post('/delete-car', deleteCar);
+ownerRouter.get('/dashboard', getDashboardData);
 ownerRouter.post('/dashboard', getDashboardData);
+ownerRouter.patch('/update-image', upload.single('image'), updateUserImage);
 ownerRouter.post('/update-image', upload.single('image'), updateUserImage);
 
 export default ownerRouter;

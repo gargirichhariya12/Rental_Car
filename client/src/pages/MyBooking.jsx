@@ -5,6 +5,8 @@ import { useAppContext } from '../Context/AppContext';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import StatusBadge from '../components/StatusBadge';
+import EmptyState from '../components/EmptyState';
+import Loader from '../components/Loader';
 
 function MyBooking() {
   const [bookings, setBookings] = useState([]);
@@ -41,7 +43,7 @@ function MyBooking() {
   }, [token]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading your bookings...</div>;
+    return <Loader />;
   }
 
   return (
@@ -49,9 +51,10 @@ function MyBooking() {
       <Heading heading="My Bookings" />
       
       {bookings.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <p>You have no bookings yet.</p>
-        </div>
+        <EmptyState
+          title='You have no bookings yet'
+          description='Once you reserve a car, your trips and payments will appear here.'
+        />
       ) : (
         <div className="space-y-6 mt-10">
           {bookings.map((booking, index) => (

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import Title from '../../components/Owner/Title'
 import StatusBadge from '../../components/StatusBadge'
+import EmptyState from '../../components/EmptyState'
 
 const ManageBooking = () => {
   const currency = import.meta.env.VITE_CURRENCY
@@ -43,6 +44,14 @@ const ManageBooking = () => {
     <div className='px-4 pt-10 md:px-10 w-full'>
       <Title title='Manage Booking' subTitle='Track all customer bookings, approve or cancel requests, and manage booking statuses' />
 
+      {bookings.length === 0 ? (
+        <div className='mt-6'>
+          <EmptyState
+            title='No bookings to manage'
+            description='Customer reservations will show up here once renters start booking your cars.'
+          />
+        </div>
+      ) : (
       <div className=' w-full rounded-md overflow-hidden border border-gray-300 mt-6'>
 
         <table className='w-full border border-collapse text-left text-sm text'>
@@ -98,6 +107,7 @@ const ManageBooking = () => {
         </table>
 
       </div>
+      )}
 
     </div>
   )

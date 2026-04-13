@@ -9,11 +9,15 @@ import fs from "fs";
 
 export const changeRoleToOwner = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
-  await User.findByIdAndUpdate(_id, { role: "owner" });
+  const user = await User.findByIdAndUpdate(_id, { role: "owner" }, {
+    new: true,
+    runValidators: true
+  }).select("-password");
 
   res.status(200).json({
     status: "success",
-    message: "Now you can list cars"
+    message: "Now you can list cars",
+    data: { user }
   });
 });
 
@@ -25,7 +29,14 @@ export const addCar = catchAsync(async (req, res, next) => {
     return next(new AppError("Car data is required", 400));
   }
 
-  const carData = JSON.parse(req.body.carData);
+  let carData;
+
+  try {
+    carData = JSON.parse(req.body.carData);
+  } catch {
+    return next(new AppError("Car data must be valid JSON", 400));
+  }
+
   const car = await CarService.addCar(_id, carData, req.file);
 
   res.status(201).json({
@@ -51,7 +62,11 @@ export const toggleCarAvailability = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
   const { carId } = req.body;
 
-  const car = await Car.findById(carId);
+  if (!carId) {
+    return next(new AppError("Car id is required", 400));
+  }
+
+  const car = await Car.findOne({ _id: carId, isDeleted: false });
   if (!car) return next(new AppError("Car not found", 404));
 
   if (car.owner.toString() !== _id.toString()) {
@@ -71,22 +86,36 @@ export const toggleCarAvailability = catchAsync(async (req, res, next) => {
 //Api to delete a car
 export const deleteCar = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
-  const { carId } = req.body;
+  const carId = req.params.carId || req.body.carId;
 
-  const car = await Car.findById(carId);
+  if (!carId) {
+    return next(new AppError("Car id is required", 400));
+  }
+
+  const car = await Car.findOne({ _id: carId, isDeleted: false });
   if (!car) return next(new AppError("Car not found", 404));
 
   if (car.owner.toString() !== _id.toString()) {
     return next(new AppError("Unauthorized", 403));
   }
 
-  // Soft delete or handle dependencies
+  const hasUpcomingBookings = await Booking.exists({
+    car: carId,
+    status: { $in: ["pending", "confirmed"] },
+    returnDate: { $gte: new Date() }
+  });
+
+  if (hasUpcomingBookings) {
+    return next(new AppError("This car has active bookings and cannot be deleted yet", 400));
+  }
+
   car.isAvailable = false;
+  car.isDeleted = true;
   await car.save();
 
   res.status(200).json({
     status: "success",
-    message: "Car removed from listings"
+    message: "Car deleted successfully"
   });
 });
 
@@ -94,7 +123,7 @@ export const deleteCar = catchAsync(async (req, res, next) => {
 export const getDashboardData = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
 
-  const cars = await Car.find({ owner: _id });
+  const cars = await Car.find({ owner: _id, isDeleted: false });
   const bookings = await Booking.find({ owner: _id })
     .populate("car user")
     .sort({ createdAt: -1 });

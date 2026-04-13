@@ -6,7 +6,7 @@ import { sendTokens } from "../utils/tokenUtils.js";
 
 // Register user
 export const registerUser = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
   const normalizedEmail = email?.toLowerCase().trim();
 
   if (!name?.trim() || !normalizedEmail || !password || password.length < 8) {
@@ -18,15 +18,11 @@ export const registerUser = catchAsync(async (req, res, next) => {
     return next(new AppError("User already exists with this email", 400));
   }
 
-  // Password hashing is handled in model if using pre-save middleware, 
-  // but here it was manual in the old code. We'll stick to manual for consistency 
-  // or add a pre-save hook. Let's stick to manual for now but use bcrypt.
-  // Actually, I'll add bcrypt hash here as before.
   const user = await User.create({
     name: name.trim(),
     email: normalizedEmail,
     password,
-    role: role === "owner" ? "owner" : "user"
+    role: "user"
   });
 
   sendTokens(res, user, 201);
