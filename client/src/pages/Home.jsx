@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <section
-        className="relative w-full min-h-[90vh] flex items-center overflow-hidden"
+        className="relative w-full min-h-[90vh] flex items-center overflow-hidden bg-black"
         style={{
           backgroundImage: `url(${Hero})`,
           backgroundSize: "cover",
