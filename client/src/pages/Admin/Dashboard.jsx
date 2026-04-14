@@ -6,8 +6,10 @@ import { toast } from 'react-hot-toast';
 import { CardSkeleton } from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import Panel from '../../components/Panel';
+import { useAppContext } from '../../Context/AppContext';
 
 const AdminDashboard = () => {
+  const { currency } = useAppContext();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,7 @@ const AdminDashboard = () => {
     { name: 'Total Users', value: stats?.usersCount, icon: <Users className="text-blue-400" />, trend: '+12%' },
     { name: 'Active Cars', value: stats?.carsCount, icon: <Car className="text-emerald-400" />, trend: '+5%' },
     { name: 'Total Bookings', value: stats?.bookingsCount, icon: <CalendarCheck className="text-amber-400" />, trend: '+28%' },
-    { name: 'Total Revenue', value: `$${stats.totalRevenue.toLocaleString()}`, icon: <TrendingUp className="text-indigo-400" />, trend: '+18%' },
+    { name: 'Total Revenue', value: `${currency}${stats.totalRevenue.toLocaleString()}`, icon: <TrendingUp className="text-indigo-400" />, trend: '+18%' },
   ];
 
   return (

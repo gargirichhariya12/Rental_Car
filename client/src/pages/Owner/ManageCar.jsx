@@ -6,7 +6,7 @@ import { Eye, EyeOff, Trash2 } from "lucide-react";
 import EmptyState from '../../components/EmptyState';
 
 const ManageCar = () => {
-  const currency = import.meta.env.VITE_CURRENCY
+  const currency = import.meta.env.VITE_CURRENCY || '₹'
   const [cars, setCars] = useState([])
 
   const fetchOwnerCars = async () => {

@@ -6,7 +6,7 @@ import StatusBadge from '../../components/StatusBadge'
 import EmptyState from '../../components/EmptyState'
 
 const ManageBooking = () => {
-  const currency = import.meta.env.VITE_CURRENCY
+  const currency = import.meta.env.VITE_CURRENCY || '₹'
   const [bookings, setBookings] = useState([])
   const fetchOwnerBooking = async () => {
     try {

@@ -2,14 +2,18 @@ import React from 'react';
 import { User, MapPin, Car, Fuel, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAppContext } from '../Context/AppContext';
 
 const CarCard = ({ car }) => {
   void motion;
   const navigate = useNavigate();
-  const currency = import.meta.env.VITE_CURRENCY || '$';
+  const { user } = useAppContext();
+  const currency = import.meta.env.VITE_CURRENCY || '₹';
   const ratingLabel = typeof car.averageRating === 'number' && car.averageRating > 0
     ? car.averageRating.toFixed(1)
     : 'New';
+  const ownerId = typeof car.owner === 'object' ? car.owner?._id : car.owner;
+  const isOwnedByCurrentUser = Boolean(user?._id && ownerId && user._id === ownerId);
 
   return (
     <motion.div
@@ -21,7 +25,6 @@ const CarCard = ({ car }) => {
       onClick={() => { navigate(`/CarDetails/${car._id}`); window.scrollTo(0, 0); }}
       className="group cursor-pointer bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300"
     >
-      {/* Image Container */}
       <div className="relative h-56 overflow-hidden">
         <motion.img
           whileHover={{ scale: 1.1 }}
@@ -31,7 +34,6 @@ const CarCard = ({ car }) => {
           className="w-full h-full object-cover"
         />
 
-        {/* Status Badge */}
         {car.isAvailable && (
           <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
@@ -39,7 +41,12 @@ const CarCard = ({ car }) => {
           </div>
         )}
 
-        {/* Price Badge */}
+        {isOwnedByCurrentUser && (
+          <div className="absolute top-4 right-4 bg-indigo-600/95 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+            Your Listing
+          </div>
+        )}
+
         <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-md border border-white/10 text-white px-4 py-2 rounded-2xl shadow-xl">
           <span className="text-xs text-gray-400 font-medium">From </span>
           <span className="text-lg font-bold">{currency}{car.pricePerDay}</span>
@@ -47,7 +54,6 @@ const CarCard = ({ car }) => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">
           <div>
@@ -82,6 +88,12 @@ const CarCard = ({ car }) => {
             <span className="truncate">{car.location}</span>
           </div>
         </div>
+
+        {isOwnedByCurrentUser && (
+          <div className="mt-5 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-200">
+            This is your listing. You can view it here, but you cannot book it.
+          </div>
+        )}
       </div>
     </motion.div>
   );

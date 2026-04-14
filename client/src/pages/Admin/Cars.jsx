@@ -5,8 +5,10 @@ import { CarFront, MapPin, UserRound } from 'lucide-react';
 import { TableSkeleton } from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import Panel from '../../components/Panel';
+import { useAppContext } from '../../Context/AppContext';
 
 const AdminCars = () => {
+  const { currency } = useAppContext();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,7 +78,7 @@ const AdminCars = () => {
                   <span>{car.owner?.name || 'Unknown owner'}</span>
                 </div>
                 <div className='text-gray-400'>
-                  ${car.pricePerDay}/day
+                  {currency}{car.pricePerDay}/day
                 </div>
               </div>
             </div>

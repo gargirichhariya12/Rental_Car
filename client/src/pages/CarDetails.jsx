@@ -11,7 +11,7 @@ import { ArrowLeft, Fuel, Car, User, MapPin, BadgeCheck } from 'lucide-react';
 function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token, setShowLogin } = useAppContext();
+  const { token, user, setShowLogin } = useAppContext();
   const [car, setCar] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingDates, setBookingDates] = useState({
@@ -19,7 +19,9 @@ function CarDetails() {
     returnDate: '',
   });
 
-  const currency = import.meta.env.VITE_CURRENCY || '$';
+  const currency = import.meta.env.VITE_CURRENCY || '₹';
+  const ownerId = typeof car?.owner === 'object' ? car.owner?._id : car?.owner;
+  const isOwnedByCurrentUser = Boolean(user?._id && ownerId && user._id === ownerId);
 
   useEffect(() => {
     const fetchCarDetails = async () => {
@@ -42,6 +44,11 @@ function CarDetails() {
 
     if (!token) {
       setShowLogin(true);
+      return;
+    }
+
+    if (isOwnedByCurrentUser) {
+      toast.error('You cannot book your own car');
       return;
     }
 
@@ -84,7 +91,7 @@ function CarDetails() {
             <div className='space-y-6'>
               <div>
                 <h1 className='text-3xl font-bold text'>{car.brand} {car.model}</h1>
-                <p className='text-gray-500 text-lg'>{car.category} ● {car.year}</p>
+                <p className='text-gray-500 text-lg'>{car.category} • {car.year}</p>
               </div>
               <hr className="border border-gray-800 my-6" />
 
@@ -131,35 +138,54 @@ function CarDetails() {
             </p>
             <hr className='border-borderColor my-6' />
 
-            <DateInput
-              id='pickup-date'
-              label='Pickup Date'
-              min={new Date().toISOString().split('T')[0]}
-              value={bookingDates.pickupDate}
-              onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, pickupDate: e.target.value }))}
-              required
-              className='text'
-            />
+            {isOwnedByCurrentUser ? (
+              <>
+                <div className='rounded-2xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-4 text-sm text-indigo-200'>
+                  This car belongs to you, so it cannot be booked from this account.
+                </div>
+                <Button
+                  type="button"
+                  fullWidth
+                  variant='secondary'
+                  className='font-medium'
+                  onClick={() => navigate('/owner/manage-cars')}
+                >
+                  Manage Listing
+                </Button>
+              </>
+            ) : (
+              <>
+                <DateInput
+                  id='pickup-date'
+                  label='Pickup Date'
+                  min={new Date().toISOString().split('T')[0]}
+                  value={bookingDates.pickupDate}
+                  onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, pickupDate: e.target.value }))}
+                  required
+                  className='text'
+                />
 
-            <DateInput
-              id='return-date'
-              label='Return Date'
-              min={bookingDates.pickupDate || new Date().toISOString().split('T')[0]}
-              value={bookingDates.returnDate}
-              onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, returnDate: e.target.value }))}
-              required
-              className='text'
-            />
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              fullWidth
-              variant='primary'
-              className='bg-blue-600 font-medium hover:bg-blue-700'
-            >
-              {isSubmitting ? 'Booking...' : 'Book Now'}
-            </Button>
-            <p className='text-center text text-sm'>No credit card required to reserve</p>
+                <DateInput
+                  id='return-date'
+                  label='Return Date'
+                  min={bookingDates.pickupDate || new Date().toISOString().split('T')[0]}
+                  value={bookingDates.returnDate}
+                  onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, returnDate: e.target.value }))}
+                  required
+                  className='text'
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  fullWidth
+                  variant='primary'
+                  className='bg-blue-600 font-medium hover:bg-blue-700'
+                >
+                  {isSubmitting ? 'Booking...' : 'Book Now'}
+                </Button>
+                <p className='text-center text text-sm'>No credit card required to reserve</p>
+              </>
+            )}
           </form>
         </div>
       </div>

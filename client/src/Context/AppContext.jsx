@@ -26,7 +26,7 @@ const parseTokenExpiry = (accessToken) => {
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
-  const currency = import.meta.env.VITE_CURRENCY || "$";
+  const currency = import.meta.env.VITE_CURRENCY || "₹";
   const [token, setToken] = useState(localStorage.getItem('token')); // Access token
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

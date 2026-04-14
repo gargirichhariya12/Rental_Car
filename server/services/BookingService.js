@@ -48,6 +48,9 @@ class BookingService {
     if (!car) throw new AppError("Car not found", 404);
     if (car.isDeleted) throw new AppError("This car is no longer available for rent", 404);
     if (!car.isAvailable) throw new AppError("Car is currently not available for rent", 400);
+    if (car.owner.toString() === userId.toString()) {
+      throw new AppError("You cannot book your own car", 403);
+    }
 
     const isAvailable = await this.checkAvailability(carId, pickupDate, returnDate);
     if (!isAvailable) {

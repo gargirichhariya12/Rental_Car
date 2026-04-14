@@ -6,8 +6,10 @@ import Title from '../../components/Owner/Title'
 import StatCard from '../../components/Owner/StatCard'
 import StatusBadge from '../../components/StatusBadge'
 import EmptyState from '../../components/EmptyState'
+import { useAppContext } from '../../Context/AppContext'
 
 function Dashboard() {
+  const { currency } = useAppContext();
   const [data, setData] = useState({
     totalCars: 0,
     totalBookings: 0,
@@ -85,7 +87,7 @@ function Dashboard() {
               </div>
 
               <div className="flex items-center gap-4">
-                <p className="text-gray-300">${item.price}</p>
+                <p className="text-gray-300">{currency}{item.price}</p>
 
                 <StatusBadge
                   label={item.status}
@@ -112,7 +114,7 @@ function Dashboard() {
         <p className="text-gray-400 text-sm mb-4">Revenue for current month</p>
 
         <h1 className="text-4xl font-bold text-blue-500">
-          ${monthlyRevenue}
+          {currency}{monthlyRevenue}
         </h1>
       </div>
 
