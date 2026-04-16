@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         },
         select: false
     },
-    role: { type: String, enum: ["admin", "owner", "user"], default: 'user' },
+    role: { type: String, enum: ["owner", "user"], default: 'user' },
     image: { type: String, default: '' },
     googleId: { type: String },
     refreshToken: { type: String, select: false },

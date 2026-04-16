@@ -9,7 +9,7 @@ ownerRouter.post('/change-role', protect, changeRoleToOwner);
 
 // Apply protection and owner restriction to all routes below
 ownerRouter.use(protect);
-ownerRouter.use(restrictTo('owner', 'admin'));
+ownerRouter.use(restrictTo('owner'));
 
 ownerRouter.post('/add-car', upload.single('image'), addCar);
 ownerRouter.get('/cars', getOwnerCar);

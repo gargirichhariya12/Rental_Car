@@ -12,6 +12,10 @@ export const createCheckoutSession = catchAsync(async (req, res, next) => {
 
   const session = await PaymentService.createCheckoutSession(bookingId, _id);
 
+  if (!session?.url) {
+    return next(new AppError("Unable to create payment checkout session", 502));
+  }
+
   res.status(200).json({
     status: "success",
     sessionUrl: session.url
@@ -42,6 +46,15 @@ export const checkAvailabilityOfCar = catchAsync(async (req, res, next) => {
     status: "success",
     results: availableCars.length,
     data: { availableCars }
+  });
+});
+
+export const getCarAvailability = catchAsync(async (req, res) => {
+  const availability = await BookingService.getBlockedRanges(req.params.carId);
+
+  res.status(200).json({
+    status: "success",
+    data: availability,
   });
 });
 

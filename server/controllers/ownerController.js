@@ -128,24 +128,139 @@ export const getDashboardData = catchAsync(async (req, res, next) => {
     .populate("car user")
     .sort({ createdAt: -1 });
 
-  const stats = bookings.reduce((acc, b) => {
-    if (b.status === 'pending') acc.pending++;
-    if (b.status === 'confirmed') {
-      acc.completed++;
-      acc.revenue += b.price;
-    }
+  const summary = bookings.reduce((acc, booking) => {
+    if (booking.status === "pending") acc.pendingBookings += 1;
+    if (booking.status === "confirmed") acc.confirmedBookings += 1;
+    if (booking.status === "completed") acc.completedBookings += 1;
+    if (booking.status === "cancelled") acc.cancelledBookings += 1;
+    if (booking.paymentStatus === "paid") acc.totalRevenue += booking.price;
     return acc;
-  }, { pending: 0, completed: 0, revenue: 0 });
+  }, {
+    totalCars: cars.length,
+    totalBookings: bookings.length,
+    pendingBookings: 0,
+    confirmedBookings: 0,
+    completedBookings: 0,
+    cancelledBookings: 0,
+    totalRevenue: 0,
+  });
+
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (5 - index));
+    return {
+      key: `${date.getFullYear()}-${date.getMonth()}`,
+      label: date.toLocaleString("en-US", { month: "short" }),
+      revenue: 0,
+      bookings: 0,
+    };
+  });
+
+  const monthMap = new Map(months.map((month) => [month.key, month]));
+
+  const topCarsMap = new Map();
+  const activeCars = cars.length || 1;
+
+  bookings.forEach((booking) => {
+    const createdAt = new Date(booking.createdAt);
+    const monthKey = `${createdAt.getFullYear()}-${createdAt.getMonth()}`;
+    const monthBucket = monthMap.get(monthKey);
+    if (monthBucket) {
+      monthBucket.bookings += 1;
+      if (booking.paymentStatus === "paid") {
+        monthBucket.revenue += booking.price;
+      }
+    }
+
+    if (booking.car) {
+      const existing = topCarsMap.get(booking.car._id.toString()) || {
+        carId: booking.car._id,
+        label: `${booking.car.brand} ${booking.car.model}`,
+        bookings: 0,
+        revenue: 0,
+      };
+
+      existing.bookings += 1;
+      if (booking.paymentStatus === "paid") {
+        existing.revenue += booking.price;
+      }
+
+      topCarsMap.set(booking.car._id.toString(), existing);
+    }
+  });
+
+  const topCars = Array.from(topCarsMap.values())
+    .sort((a, b) => {
+      if (b.bookings !== a.bookings) return b.bookings - a.bookings;
+      return b.revenue - a.revenue;
+    })
+    .slice(0, 5);
+
+  const fleetUtilization = cars
+    .map((car) => {
+      const carBookings = bookings.filter((booking) => booking.car?._id.toString() === car._id.toString());
+      const bookedDays = carBookings.reduce((total, booking) => {
+        const durationInMs = new Date(booking.returnDate).getTime() - new Date(booking.pickupDate).getTime();
+        const days = Math.max(1, Math.ceil(durationInMs / (1000 * 60 * 60 * 24)));
+        return total + days;
+      }, 0);
+
+      return {
+        carId: car._id,
+        label: `${car.brand} ${car.model}`,
+        bookedDays,
+        utilizationRate: Math.min(100, Number(((carBookings.length / Math.max(1, bookings.length)) * 100).toFixed(1))),
+        availabilityStatus: car.isAvailable ? "active" : "paused",
+      };
+    })
+    .sort((a, b) => b.utilizationRate - a.utilizationRate);
+
+  const monthlyRevenue = months.map((month) => ({
+    label: month.label,
+    value: month.revenue,
+  }));
+
+  const monthlyBookings = months.map((month) => ({
+    label: month.label,
+    value: month.bookings,
+  }));
+
+  const needsAttention = [
+    {
+      label: "Pending bookings",
+      value: summary.pendingBookings,
+      tone: summary.pendingBookings > 0 ? "warning" : "success",
+    },
+    {
+      label: "Cancelled bookings",
+      value: summary.cancelledBookings,
+      tone: summary.cancelledBookings > 0 ? "warning" : "neutral",
+    },
+    {
+      label: "Fleet coverage",
+      value: `${cars.filter((car) => car.isAvailable).length}/${activeCars} live`,
+      tone: cars.some((car) => !car.isAvailable) ? "warning" : "success",
+    },
+  ];
 
   res.status(200).json({
     status: "success",
     data: {
-      totalCars: cars.length,
-      totalBookings: bookings.length,
-      pendingBookings: stats.pending,
-      completedBookings: stats.completed,
-      monthlyRevenue: stats.revenue,
-      recentBookings: bookings.slice(0, 5)
+      ...summary,
+      monthlyRevenueTotal: summary.totalRevenue,
+      recentBookings: bookings.slice(0, 5),
+      summary,
+      monthlyRevenue,
+      monthlyBookings,
+      topCars,
+      fleetUtilization,
+      needsAttention,
+      bookingMix: {
+        pending: summary.pendingBookings,
+        confirmed: summary.confirmedBookings,
+        completed: summary.completedBookings,
+        cancelled: summary.cancelledBookings,
+      },
     }
   });
 });

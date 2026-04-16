@@ -3,6 +3,10 @@ import Car from "../models/Car.js";
 import AppError from "../utils/AppError.js";
 
 class BookingService {
+  getBlockingStatuses() {
+    return ["pending", "confirmed"];
+  }
+
   validateDates(pickupDate, returnDate) {
     const pickup = new Date(pickupDate);
     const dropoff = new Date(returnDate);
@@ -21,7 +25,7 @@ class BookingService {
 
     const overlappingBooking = await Booking.findOne({
       car: carId,
-      status: { $ne: 'cancelled' },
+      status: { $in: this.getBlockingStatuses() },
       $or: [
         {
           pickupDate: { $lt: new Date(returnDate) },
@@ -31,6 +35,32 @@ class BookingService {
     });
 
     return !overlappingBooking;
+  }
+
+  async getBlockedRanges(carId) {
+    const car = await Car.findById(carId).select("_id isDeleted isAvailable");
+    if (!car || car.isDeleted) {
+      throw new AppError("Car not found", 404);
+    }
+
+    const bookings = await Booking.find({
+      car: carId,
+      status: { $in: this.getBlockingStatuses() },
+    })
+      .select("pickupDate returnDate status")
+      .sort({ pickupDate: 1 });
+
+    return {
+      car: {
+        _id: car._id,
+        isAvailable: car.isAvailable,
+      },
+      blockedRanges: bookings.map((booking) => ({
+        startDate: booking.pickupDate.toISOString().split("T")[0],
+        endDate: booking.returnDate.toISOString().split("T")[0],
+        status: booking.status,
+      })),
+    };
   }
 
   calculatePrice(pricePerDay, pickupDate, returnDate) {

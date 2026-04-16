@@ -5,14 +5,27 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Loader from '../components/Loader';
 import DateInput from '../components/DateInput';
 import Button from '../components/Button';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import { useAppContext } from '../Context/AppContext';
 import { ArrowLeft, Fuel, Car, User, MapPin, BadgeCheck } from 'lucide-react';
+
+const todayKey = new Date().toISOString().split('T')[0];
+
+const datesOverlap = (pickupDate, returnDate, blockedRanges) => {
+  if (!pickupDate || !returnDate) {
+    return false;
+  }
+
+  return blockedRanges.some((range) => pickupDate < range.endDate && returnDate > range.startDate);
+};
 
 function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user, setShowLogin } = useAppContext();
   const [car, setCar] = useState(null);
+  const [availability, setAvailability] = useState([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingDates, setBookingDates] = useState({
     pickupDate: '',
@@ -24,20 +37,55 @@ function CarDetails() {
   const isOwnedByCurrentUser = Boolean(user?._id && ownerId && user._id === ownerId);
 
   useEffect(() => {
-    const fetchCarDetails = async () => {
+    const fetchPageData = async () => {
       try {
-        const { data } = await axios.get(`/api/user/cars/${id}`);
-        if (data.status === 'success') {
-          setCar(data.data.car);
+        setAvailabilityLoading(true);
+        const [carResponse, availabilityResponse] = await Promise.all([
+          axios.get(`/api/user/cars/${id}`),
+          axios.get(`/api/bookings/availability/${id}`),
+        ]);
+
+        if (carResponse.data.status === 'success') {
+          setCar(carResponse.data.data.car);
+        }
+
+        if (availabilityResponse.data.status === 'success') {
+          setAvailability(availabilityResponse.data.data.blockedRanges || []);
         }
       } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to load car details');
         navigate('/cars');
+      } finally {
+        setAvailabilityLoading(false);
       }
     };
 
-    fetchCarDetails();
+    fetchPageData();
   }, [id, navigate]);
+
+  const dateConflict = datesOverlap(bookingDates.pickupDate, bookingDates.returnDate, availability);
+  const invalidDateOrder = Boolean(
+    bookingDates.pickupDate &&
+    bookingDates.returnDate &&
+    bookingDates.returnDate <= bookingDates.pickupDate
+  );
+  const bookingError = invalidDateOrder
+    ? 'Return date must be after pickup date.'
+    : dateConflict
+      ? 'Those dates overlap with an existing booking. Please choose another range.'
+      : '';
+
+  const updateBookingDate = (field, value) => {
+    setBookingDates((currentDates) => {
+      const nextDates = { ...currentDates, [field]: value };
+
+      if (field === 'pickupDate' && nextDates.returnDate && nextDates.returnDate <= value) {
+        nextDates.returnDate = '';
+      }
+
+      return nextDates;
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,6 +97,11 @@ function CarDetails() {
 
     if (isOwnedByCurrentUser) {
       toast.error('You cannot book your own car');
+      return;
+    }
+
+    if (bookingError) {
+      toast.error(bookingError);
       return;
     }
 
@@ -117,6 +170,11 @@ function CarDetails() {
                 <p className='text-gray-500'>{car.description}</p>
               </div>
 
+              <AvailabilityCalendar
+                blockedRanges={availability}
+                selection={bookingDates}
+              />
+
               <div>
                 <h1 className='text-xl text font-medium mb-3'>Features</h1>
                 <ul className='grid grid-cols-2 sm:grid-cols-2 gap-2'>
@@ -158,9 +216,9 @@ function CarDetails() {
                 <DateInput
                   id='pickup-date'
                   label='Pickup Date'
-                  min={new Date().toISOString().split('T')[0]}
+                  min={todayKey}
                   value={bookingDates.pickupDate}
-                  onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, pickupDate: e.target.value }))}
+                  onChange={(e) => updateBookingDate('pickupDate', e.target.value)}
                   required
                   className='text'
                 />
@@ -168,15 +226,30 @@ function CarDetails() {
                 <DateInput
                   id='return-date'
                   label='Return Date'
-                  min={bookingDates.pickupDate || new Date().toISOString().split('T')[0]}
+                  min={bookingDates.pickupDate || todayKey}
                   value={bookingDates.returnDate}
-                  onChange={(e) => setBookingDates((currentDates) => ({ ...currentDates, returnDate: e.target.value }))}
+                  onChange={(e) => updateBookingDate('returnDate', e.target.value)}
                   required
                   className='text'
                 />
+                {availabilityLoading ? (
+                  <p className='text-sm text-gray-400'>Checking live availability...</p>
+                ) : bookingError ? (
+                  <p className='rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+                    {bookingError}
+                  </p>
+                ) : bookingDates.pickupDate && bookingDates.returnDate ? (
+                  <p className='rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200'>
+                    Your dates are open based on the latest booking calendar.
+                  </p>
+                ) : (
+                  <p className='rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-300'>
+                    Select pickup and return dates to validate them against the live booking calendar.
+                  </p>
+                )}
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || availabilityLoading || Boolean(bookingError)}
                   fullWidth
                   variant='primary'
                   className='bg-blue-600 font-medium hover:bg-blue-700'

@@ -31,7 +31,6 @@ const Input = ({
         <option
           key={option.value || option.label}
           value={option.value}
-          disabled={option.value === ''}
           className='bg-black text-white'
         >
           {option.label}

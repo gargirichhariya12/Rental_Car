@@ -94,6 +94,20 @@ const CarCard = ({ car }) => {
             This is your listing. You can view it here, but you cannot book it.
           </div>
         )}
+
+        {Array.isArray(car.matchReasons) && car.matchReasons.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-emerald-200">Why this matches</p>
+              <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200">
+                Score {Math.round(car.matchScore || 0)}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-emerald-100">
+              {car.matchReasons.join(' • ')}
+            </p>
+          </div>
+        )}
       </div>
     </motion.div>
   );

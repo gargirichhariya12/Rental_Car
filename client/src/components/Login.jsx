@@ -55,7 +55,7 @@ const Login = ({ setShowLogin }) => {
 
         if (loggedInUser) {
           setUser(loggedInUser);
-          setIsOwner(loggedInUser.role === 'owner' || loggedInUser.role === 'admin');
+          setIsOwner(loggedInUser.role === 'owner');
         } else {
           await fetchUser();
         }
@@ -72,7 +72,31 @@ const Login = ({ setShowLogin }) => {
 
   const handleGoogleLogin = () => {
     if (isSubmitting) return;
-    window.location.href = `${import.meta.env.VITE_BASE_URL}/auth/google`;
+
+    const launchGoogleLogin = async () => {
+      const backendBaseUrl = import.meta.env.VITE_BASE_URL || window.location.origin;
+
+      try {
+        setIsSubmitting(true);
+
+        const response = await fetch(`${backendBaseUrl}/`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Backend is unavailable');
+        }
+
+        window.location.assign(`${backendBaseUrl}/auth/google`);
+      } catch {
+        toast.error('Backend server is not running on http://localhost:3000');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    void launchGoogleLogin();
   };
 
   return (

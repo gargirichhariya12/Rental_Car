@@ -19,7 +19,12 @@ const NavbarOwner = () => {
         />
         <div className='hidden text-right md:block'>
           <p className='text-xs uppercase tracking-[0.2em] text-gray-500'>Owner Panel</p>
-          <p className='text-sm font-medium text-white'>Welcome, {user?.name || "Owner"}</p>
+          <div className='flex items-center justify-end gap-2'>
+            <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300'>
+              Owner
+            </span>
+            <p className='text-sm font-medium text-white'>Welcome, {user?.name || "Owner"}</p>
+          </div>
         </div>
       </div>
     </div>

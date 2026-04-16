@@ -74,7 +74,7 @@ export const AppProvider = ({ children }) => {
       const { data } = await axios.get('/api/user/data');
       if (data.status === 'success') {
         setUser(data.data.user);
-        setIsOwner(data.data.user.role === 'owner' || data.data.user.role === 'admin');
+        setIsOwner(data.data.user.role === 'owner');
       }
     } catch (error) {
       console.error("Auth verification failed", error);

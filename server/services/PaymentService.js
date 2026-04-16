@@ -1,10 +1,11 @@
 import Stripe from 'stripe';
 import Booking from '../models/Booking.js';
 import AppError from '../utils/AppError.js';
+import EmailService from './EmailService.js';
 
 const getStripeClient = () => {
   if (!process.env.STRIPE_SECRET_KEY) {
-    throw new AppError('Stripe is not configured on the server', 503);
+    throw new AppError('Stripe payment gateway is not configured. Add STRIPE_SECRET_KEY in server/.env.', 503);
   }
 
   return new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -51,7 +52,7 @@ class PaymentService {
     let event;
     try {
       if (!process.env.STRIPE_WEBHOOK_SECRET) {
-        throw new AppError('Stripe webhook is not configured on the server', 503);
+        throw new AppError('Stripe webhook is not configured. Add STRIPE_WEBHOOK_SECRET in server/.env.', 503);
       }
 
       const stripe = getStripeClient();
@@ -68,11 +69,19 @@ class PaymentService {
       const session = event.data.object;
       const bookingId = session.client_reference_id;
 
-      await Booking.findByIdAndUpdate(bookingId, {
+      const updatedBooking = await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: 'paid',
         status: 'confirmed',
         paymentId: session.payment_intent
-      });
+      }, { new: true })
+        .populate('car', 'brand model')
+        .populate('user', 'name email');
+
+      if (updatedBooking) {
+        await EmailService.sendBookingConfirmation(updatedBooking).catch((error) => {
+          console.error('Booking confirmation email failed:', error.message);
+        });
+      }
     }
 
     return { received: true };

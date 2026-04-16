@@ -4,7 +4,6 @@ Full-stack car rental platform with:
 
 - a public customer app for browsing cars and creating bookings
 - an owner dashboard for listing and managing cars
-- an admin area for platform stats
 - Google auth, JWT-based sessions, Stripe checkout, and ImageKit uploads
 
 ## Stack
@@ -13,6 +12,7 @@ Full-stack car rental platform with:
 - Server: Node.js, Express 5, MongoDB, Mongoose
 - Auth: JWT, Google OAuth, cookies
 - Payments: Stripe
+- Notifications: SendGrid Email API
 - Media: ImageKit
 
 ## Main Features
@@ -21,7 +21,6 @@ Full-stack car rental platform with:
 - View detailed car pages and create bookings
 - See personal bookings and pay for unpaid bookings through Stripe
 - Upgrade a user to owner and manage owner listings/bookings
-- Admin dashboard for platform stats
 - Review endpoints for car reviews
 - Automatic logout when the access token expires
 
@@ -45,7 +44,6 @@ Rental_Car/
 - `/owner/add-car` add a listing
 - `/owner/manage-cars` manage owner cars
 - `/owner/manage-bookings` manage owner bookings
-- `/admin` admin dashboard
 - `/auth-success` Google auth callback landing page
 
 ## Backend Route Groups
@@ -82,12 +80,6 @@ Rental_Car/
 - `GET /api/reviews`
 - `POST /api/reviews`
 - `DELETE /api/reviews/:id`
-
-### Admin
-
-- `GET /api/admin/stats`
-- `GET /api/admin/users`
-- `PATCH /api/admin/update-role`
 
 ### Auth / Webhooks
 
@@ -134,12 +126,16 @@ IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_endpoint
 
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
+SENDGRID_API_KEY=your_sendgrid_api_key
+EMAIL_FROM=no-reply@yourdomain.com
+EMAIL_REPLY_TO=support@yourdomain.com
 ```
 
 Notes:
 
 - The server connects to `${MONGODB_URI}/car-rental`, so `MONGODB_URI` should be the base Mongo connection string.
-- Google OAuth, Stripe checkout, and ImageKit uploads require valid third-party credentials.
+- Google OAuth, Stripe checkout, ImageKit uploads, and email notifications require valid third-party credentials.
 
 ## Local Setup
 
@@ -198,6 +194,7 @@ docker compose up --build
 5. Booking is created with `pending` status.
 6. User can open Stripe checkout for payment.
 7. Stripe webhook marks the booking as `paid` and `confirmed`.
+8. Backend sends a real-time booking confirmation email using the SendGrid API.
 
 ## Owner Flow
 
@@ -225,5 +222,4 @@ node --check server/server.js
 ## Current Notes
 
 - `POST /api/owner/update-image` is still a placeholder response and needs full implementation.
-- Admin child pages for user management and car management are currently placeholders in the frontend.
 - Uploaded local files are stored in `server/uploads/` before ImageKit upload.

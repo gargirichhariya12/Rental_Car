@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../Context/AppContext';
 import CarCard from '../components/CarCard.jsx';
@@ -6,12 +8,23 @@ import EmptyState from '../components/EmptyState.jsx';
 import Input from '../components/Input.jsx';
 import Panel from '../components/Panel.jsx';
 import Button from '../components/Button.jsx';
-import { Filter, SlidersHorizontal, Search, RotateCcw } from 'lucide-react';
+import { Filter, Search, RotateCcw, Sparkles, Users, WalletCards, Route } from 'lucide-react';
 
 function Cars() {
   const { cars, fetchCar, isLoading } = useAppContext();
   const location = useLocation();
   const initialSearchLocation = location.state?.searchFilters?.location || '';
+  const highlightRecommendations = Boolean(location.state?.highlightRecommendations);
+  const [recommendationForm, setRecommendationForm] = useState({
+    budget: '',
+    passengers: '',
+    fuelType: '',
+    tripType: '',
+    category: '',
+    location: initialSearchLocation,
+  });
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [filters, setFilters] = useState({
     category: 'All',
     fuel_type: '',
@@ -23,10 +36,16 @@ function Cars() {
 
   const categories = ['All', 'Sedan', 'SUV', 'Luxury', 'Hatchback', 'Electric'];
   const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
+  const tripTypes = ['city', 'family', 'business', 'adventure'];
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRecommendationChange = (e) => {
+    const { name, value } = e.target;
+    setRecommendationForm((current) => ({ ...current, [name]: value }));
   };
 
   const resetFilters = () => {
@@ -44,9 +63,148 @@ function Cars() {
     fetchCar(filters);
   }, [filters, fetchCar]);
 
+  const fetchRecommendations = async (e) => {
+    e.preventDefault();
+
+    try {
+      setRecommendationsLoading(true);
+      const { data } = await axios.post('/api/user/recommendations', recommendationForm);
+
+      if (data.status === 'success') {
+        setRecommendations(data.data.recommendations || []);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch recommendations");
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  };
+
   return (
     <div className='min-h-screen glow-bg pb-20'>
       <div className='max-w-7xl mx-auto px-6 pt-10'>
+        <Panel tone='glass' className={`mb-10 overflow-hidden ${highlightRecommendations ? 'border-emerald-500/30 shadow-[0_0_45px_rgba(16,185,129,0.12)]' : 'border-indigo-500/20'}`}>
+          <div className='grid gap-8 lg:grid-cols-[1.2fr_0.8fr]'>
+            <div>
+              <div className='flex items-center gap-3 text-indigo-300'>
+                <Sparkles className='h-5 w-5' />
+                <span className='text-sm font-semibold uppercase tracking-[0.25em]'>Find My Car</span>
+              </div>
+              <h2 className='mt-4 text-3xl font-bold text-white'>Get tailored car picks in one step.</h2>
+              <p className='mt-3 max-w-2xl text-sm text-gray-400'>
+                Tell us about your budget, group size, and trip style. We will rank the best matches from the live inventory.
+              </p>
+
+              <form onSubmit={fetchRecommendations} className='mt-6 grid gap-4 md:grid-cols-2'>
+                <Input
+                  name='budget'
+                  type='number'
+                  label='Budget per day'
+                  placeholder='2500'
+                  value={recommendationForm.budget}
+                  onChange={handleRecommendationChange}
+                  icon={<WalletCards className='h-4 w-4' />}
+                />
+                <Input
+                  name='passengers'
+                  type='number'
+                  label='Passengers'
+                  placeholder='4'
+                  value={recommendationForm.passengers}
+                  onChange={handleRecommendationChange}
+                  icon={<Users className='h-4 w-4' />}
+                />
+                <Input
+                  name='fuelType'
+                  label='Fuel preference'
+                  value={recommendationForm.fuelType}
+                  onChange={handleRecommendationChange}
+                  options={[
+                    { value: '', label: 'Any fuel type' },
+                    ...fuelTypes.map((fuel) => ({ value: fuel, label: fuel })),
+                  ]}
+                />
+                <Input
+                  name='tripType'
+                  label='Trip type'
+                  value={recommendationForm.tripType}
+                  onChange={handleRecommendationChange}
+                  options={[
+                    { value: '', label: 'Any trip type' },
+                    ...tripTypes.map((trip) => ({ value: trip, label: trip[0].toUpperCase() + trip.slice(1) })),
+                  ]}
+                />
+                <Input
+                  name='category'
+                  label='Preferred category'
+                  value={recommendationForm.category}
+                  onChange={handleRecommendationChange}
+                  options={[
+                    { value: '', label: 'Any category' },
+                    ...categories.filter((category) => category !== 'All').map((category) => ({ value: category, label: category })),
+                  ]}
+                />
+                <Input
+                  name='location'
+                  label='Location'
+                  placeholder='Mumbai'
+                  value={recommendationForm.location}
+                  onChange={handleRecommendationChange}
+                  icon={<Route className='h-4 w-4' />}
+                />
+                <div className='md:col-span-2 flex flex-wrap gap-3'>
+                  <Button type='submit' className='bg-indigo-600 hover:bg-indigo-500' disabled={recommendationsLoading}>
+                    {recommendationsLoading ? 'Finding matches...' : 'Show recommendations'}
+                  </Button>
+                  {recommendations.length > 0 && (
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      onClick={() => setRecommendations([])}
+                    >
+                      Clear results
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className='rounded-3xl border border-white/10 bg-black/20 p-6'>
+              <h3 className='text-lg font-semibold text-white'>What the matcher considers</h3>
+              <div className='mt-5 space-y-3 text-sm text-gray-300'>
+                <div className='rounded-2xl border border-white/10 bg-white/[0.03] p-4'>
+                  Budget fit and current availability carry the strongest weight.
+                </div>
+                <div className='rounded-2xl border border-white/10 bg-white/[0.03] p-4'>
+                  Passenger capacity, fuel type, category, and trip type refine the ranking.
+                </div>
+                <div className='rounded-2xl border border-white/10 bg-white/[0.03] p-4'>
+                  Ratings and review volume help break ties between similar cars.
+                </div>
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        {recommendations.length > 0 && (
+          <div className='mb-10'>
+            <div className='mb-5 flex items-center justify-between gap-4'>
+              <div>
+                <h2 className='text-2xl font-bold text-white'>Recommended for your trip</h2>
+                <p className='text-sm text-gray-400'>Top ranked cars based on your preferences.</p>
+              </div>
+              <span className='rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200'>
+                {recommendations.length} tailored matches
+              </span>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'>
+              {recommendations.map((car) => (
+                <CarCard key={`recommendation-${car._id}`} car={car} />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className='flex flex-col lg:flex-row gap-10'>
           
           {/* Sidebar Filters */}

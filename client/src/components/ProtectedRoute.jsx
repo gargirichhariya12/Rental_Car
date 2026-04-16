@@ -4,7 +4,6 @@ import { useAppContext } from '../Context/AppContext';
 import Loader from './Loader';
 
 const getDefaultRedirect = (role) => {
-  if (role === 'admin') return '/admin';
   if (role === 'owner') return '/owner';
   return '/';
 };

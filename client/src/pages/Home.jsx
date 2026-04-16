@@ -89,6 +89,13 @@ export default function Home() {
               >
                 View Fleet
               </Button>
+              <Button
+                onClick={() => navigate("/cars", { state: { highlightRecommendations: true } })}
+                variant="light"
+                size="lg"
+              >
+                Find My Match
+              </Button>
             </motion.div>
 
             <motion.div

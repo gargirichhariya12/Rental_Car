@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import CarService from "../services/CarService.js";
+import RecommendationService from "../services/RecommendationService.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import { sendTokens } from "../utils/tokenUtils.js";
@@ -72,5 +73,15 @@ export const getCarDetails = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: { car }
+  });
+});
+
+export const getRecommendations = catchAsync(async (req, res) => {
+  const recommendations = await RecommendationService.getRecommendations(req.body);
+
+  res.status(200).json({
+    status: "success",
+    results: recommendations.length,
+    data: { recommendations },
   });
 });

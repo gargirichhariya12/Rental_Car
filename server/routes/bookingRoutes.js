@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, restrictTo } from '../middleware/auth.js';
-import { changeBookingStatus, checkAvailabilityOfCar, createBooking, getOwnerBooking, getUserBooking, createCheckoutSession } from "../controllers/BookingController.js";
+import { changeBookingStatus, checkAvailabilityOfCar, createBooking, createCheckoutSession, getCarAvailability, getOwnerBooking, getUserBooking } from "../controllers/BookingController.js";
 
 const bookingRouter = express.Router();
 
@@ -9,6 +9,7 @@ bookingRouter.get('/check-availability', (req, res, next) => {
   next();
 }, checkAvailabilityOfCar);
 bookingRouter.post('/check-availability', checkAvailabilityOfCar);
+bookingRouter.get('/availability/:carId', getCarAvailability);
 
 // Publicly accessible for logged in users
 bookingRouter.use(protect);
@@ -18,7 +19,7 @@ bookingRouter.get('/user', getUserBooking);
 bookingRouter.post('/checkout/:bookingId', createCheckoutSession);
 
 // Owner specific routes
-bookingRouter.get('/owner', restrictTo('owner', 'admin'), getOwnerBooking);
-bookingRouter.post('/change-status', restrictTo('owner', 'admin'), changeBookingStatus);
+bookingRouter.get('/owner', restrictTo('owner'), getOwnerBooking);
+bookingRouter.post('/change-status', restrictTo('owner'), changeBookingStatus);
 
 export default bookingRouter;

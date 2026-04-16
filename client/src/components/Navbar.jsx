@@ -60,6 +60,10 @@ export default function Navbar() {
   };
 
   const accentTextClass = "text-indigo-400 hover:text-indigo-300";
+  const roleLabel = user?.role === 'owner' ? 'Owner' : 'User';
+  const roleBadgeClass = user?.role === 'owner'
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+    : 'border-sky-500/30 bg-sky-500/10 text-sky-300';
 
   return (
     <motion.nav 
@@ -102,19 +106,15 @@ export default function Navbar() {
               )}
             </Link>
           ))}
-          {user?.role === 'admin' && (
-            <Link 
-              to="/admin" 
-              onClick={() => setOpen(false)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${accentTextClass}`}
-            >
-              Admin Panel
-            </Link>
-          )}
         </div>
 
         {/* Right Buttons */}
         <div className="hidden md:flex items-center gap-4">
+          {user && (
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${roleBadgeClass}`}>
+              {roleLabel}
+            </span>
+          )}
           {user && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -180,10 +180,10 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            {user?.role === 'admin' && (
-              <Link to="/admin" onClick={() => setOpen(false)} className={`text-xl font-medium ${isActivePath('/admin') ? 'text-indigo-300' : 'text-indigo-400'}`}>
-                Admin Panel
-              </Link>
+            {user && (
+              <span className={`rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] ${roleBadgeClass}`}>
+                Role: {roleLabel}
+              </span>
             )}
             <hr className="w-1/2 border-zinc-800 my-2" />
             {user && (

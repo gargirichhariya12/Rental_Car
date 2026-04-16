@@ -13,11 +13,6 @@ import AddCar from './pages/Owner/AddCar';
 import ManageCar from './pages/Owner/ManageCar';
 import ManageBooking from './pages/Owner/ManageBooking';
 
-import AdminLayout from './pages/Admin/Layout';
-import AdminDashboard from './pages/Admin/Dashboard';
-import AdminUsers from './pages/Admin/Users';
-import AdminCars from './pages/Admin/Cars';
-
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -33,8 +28,7 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const isOwnerPath = location.pathname.startsWith('/owner');
-  const isAdminPath = location.pathname.startsWith('/admin');
-  const hideLayout = isOwnerPath || isAdminPath;
+  const hideLayout = isOwnerPath;
 
   const pageVariants = {
     initial: { opacity: 0, x: -10 },
@@ -122,7 +116,7 @@ export default function App() {
 
           {/* Owner Protected Routes */}
           <Route path='/owner' element={
-            <ProtectedRoute allowedRoles={['owner', 'admin']}>
+            <ProtectedRoute allowedRoles={['owner']}>
               <Layout />
             </ProtectedRoute>
           }>
@@ -130,17 +124,6 @@ export default function App() {
             <Route path='add-car' element={<AddCar />} />
             <Route path='manage-cars' element={<ManageCar />} />
             <Route path='manage-bookings' element={<ManageBooking />} />
-          </Route>
-
-          {/* Admin Specific Routes */}
-          <Route path='/admin' element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<AdminDashboard />} />
-            <Route path='users' element={<AdminUsers />} />
-            <Route path='cars' element={<AdminCars />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

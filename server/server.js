@@ -16,7 +16,6 @@ import bookingRouter from "./routes/bookingRoutes.js";
 import authRouter from "./routes/authRoutes.js"; 
 import webhookRouter from "./routes/webhookRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
-import adminRouter from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middleware/errorMiddleware.js";
 import AppError from "./utils/AppError.js";
 
@@ -134,7 +133,6 @@ app.use('/api/user', userRouter);
 app.use('/api/owner', ownerRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/reviews', reviewRouter);
-app.use('/api/admin', adminRouter);
 app.use('/auth', authRouter);
 
 // Handle unhandled routes.
