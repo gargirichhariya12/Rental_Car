@@ -62,7 +62,7 @@ class RecommendationService {
       };
 
       const matchingCategories = tripRules[tripType] || [];
-      if (matchingCategories.includes(normalizeText(car.category))) {
+      if (matchingCategories.includes(normalizeText(car.category))) { 
         score += 10;
         reasons.push(`Well suited for ${tripType} trips`);
       }

@@ -1,10 +1,18 @@
 import React from 'react'
-import { ownerMenuLinks } from '../../assets/dummyCarData'
 import { NavLink } from 'react-router-dom'
 import { useAppContext } from '../../Context/AppContext'
+import {CarFront, LayoutDashboard, List, Plus} from 'lucide-react'
+
 
 const SlideBarOwner = () => {
   const { user } = useAppContext();
+
+  const ownerMenuLinks = [
+    { name: "Dashboard", path: "/owner", icon: <LayoutDashboard/> },
+    { name: "Add car", path: "/owner/add-car", icon: <Plus/> },
+    { name: "Manage Cars", path: "/owner/manage-cars", icon: <CarFront/>},
+    { name: "Manage Bookings", path: "/owner/manage-bookings", icon: <List/> },
+  ]
 
   return (
     <aside className='fixed left-0 top-[72px] z-20 flex h-[calc(100vh-72px)] w-20 flex-col items-center overflow-y-auto border-r border-white/10 bg-[#181C2E] pt-8 text-sm md:w-60'>
