@@ -26,13 +26,13 @@ Full-stack car rental platform with:
 
 ## Project Structure
 
-```text
+text
 Rental_Car/
 ├── client/                  # React + Vite frontend
 ├── server/                  # Express backend
 ├── docker-compose.yml       # App + MongoDB containers
 └── README.md                # Project documentation
-```
+
 
 ## Frontend Routes
 
@@ -96,10 +96,10 @@ Rental_Car/
 
 Create `client/.env`:
 
-```env
+env
 VITE_BASE_URL=http://localhost:3000
 VITE_CURRENCY=$
-```
+
 
 ### Server
 
@@ -141,26 +141,26 @@ Notes:
 
 ### 1. Install dependencies
 
-```bash
+bash
 cd client && npm install
 cd ../server && npm install
-```
+
 
 ### 2. Start the backend
 
-```bash
+bash
 cd server
 npm run server
-```
+
 
 Backend runs on `http://localhost:3000`.
 
 ### 3. Start the frontend
 
-```bash
+bash
 cd client
 npm run dev
-```
+
 
 Frontend runs on `http://localhost:5173`.
 
@@ -174,9 +174,9 @@ The repo includes a `docker-compose.yml` for:
 
 Run with:
 
-```bash
+bash
 docker compose up --build
-```
+
 
 ## Authentication and Session Behavior
 
@@ -207,17 +207,17 @@ docker compose up --build
 
 Frontend checks:
 
-```bash
+bash
 cd client
 npm run lint
 npm run build
-```
+
 
 Backend basic syntax check:
 
-```bash
+bash
 node --check server/server.js
-```
+
 
 ## Current Notes
 
