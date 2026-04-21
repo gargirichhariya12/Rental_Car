@@ -4,17 +4,17 @@ A full-stack rental car web application built using the MERN stack, featuring se
 
 📌 Architecture Overview
 
-This project follows a Decoupled Client–Server Architecture:
+This project follows a Decoupled Client–Server Architecture
 
 🔹 Frontend (Client)
 Built with React + Vite (SPA architecture)
-State Management: React Context API
-Styling: Tailwind CSS
-Animations: Framer Motion (smooth transitions & interactions)
+State Management- React Context API
+Styling- Tailwind CSS
+Animations- Framer Motion (smooth transitions & interactions)
 🔹 Backend (Server)
 Node.js + Express REST API
-Design Pattern: Controller → Service → Model
-Database: MongoDB with Mongoose
+Design Pattern- Controller → Service → Model
+Database- MongoDB with Mongoose
 🔹 Security Layer
 Helmet (secure headers)
 express-mongo-sanitize (NoSQL injection protection)
@@ -56,11 +56,11 @@ Managed via authController.js and passport.js
 Google login auto-verifies users
 Uses JWT for API + session for OAuth handshake
 💳 Booking & Payment Lifecycle
-User Action: Selects dates & clicks Book Now
-Server: Creates pending booking
-Stripe Checkout: Redirects user
-Webhook: Confirms payment
-Finalization: Booking confirmed + email sent
+User Action- Selects dates & clicks Book Now
+Server- Creates pending booking
+Stripe Checkout- Redirects user
+Webhook- Confirms payment
+Finalization- Booking confirmed + email sent
 🧩 Service Layer (Clean Architecture)
 Service	Responsibility
 CarService	Image upload, processing, DB logic
@@ -71,9 +71,9 @@ EmailService	Notification abstraction
 A custom sanitizer was implemented to handle Express 5’s read-only req.query issue, ensuring compatibility with modern middleware while preventing XSS attacks.
 
 ✨ Frontend Experience
-Global Modal Control: Context API (no prop drilling)
-Page Animations: AnimatePresence for smooth transitions
-Skeleton Loading: Prevents layout shift (CLS)
+Global Modal Control- Context API (no prop drilling)
+Page Animations- AnimatePresence for smooth transitions
+Skeleton Loading- Prevents layout shift (CLS)
 📂 Project Structure
 client/
   ├── src/
@@ -88,9 +88,9 @@ server/
   ├── routes/
   ├── middleware/
 🛠️ Tech Stack
-Frontend: React, Vite, Tailwind CSS, Framer Motion
-Backend: Node.js, Express
-Database: MongoDB (Mongoose)
-Auth: JWT + Google OAuth
-Payments: Stripe
-Image Processing: ImageKit
+Frontend- React, Vite, Tailwind CSS, Framer Motion
+Backend- Node.js, Express
+Database- MongoDB (Mongoose)
+Auth- JWT + Google OAuth
+Payments- Stripe
+Image Processing- ImageKit
