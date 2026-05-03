@@ -25,7 +25,21 @@ import "./configs/passport.js";
 const app = express();
 
 const corsOptions = {
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      "http://localhost:5173",
+      "https://rental-car-wheat-nu.vercel.app",
+      "https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
+      "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
