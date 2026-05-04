@@ -22,10 +22,11 @@ import AppError from "./utils/AppError.js";
 import "./configs/passport.js";
 
 const app = express();
-app.set("trust proxy", 1);
 
+// ✅ VERY IMPORTANT (Render fix)
+app.set("trust proxy", true);
 
-// ✅ ALLOWED ORIGINS
+// ✅ Allowed origins
 const allowedOrigins = [
   "https://rental-car-wheat-nu.vercel.app",
   "http://localhost:5173",
@@ -33,7 +34,7 @@ const allowedOrigins = [
   "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
 ];
 
-// ✅ CORS CONFIG (FINAL)
+// ✅ CORS CONFIG
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -53,21 +54,20 @@ const corsOptions = {
 // 🔥 MIDDLEWARES
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // preflight
+app.options("*", cors(corsOptions)); // preflight fix
 
-// Rate limiter
+// ✅ RATE LIMIT (SAFE)
 const limiter = rateLimit({
-  max: 100,
   windowMs: 60 * 60 * 1000,
-  message: "Too many requests, try again later",
-  skip: (req) => req.method === "OPTIONS",
-  keyGenerator: (req) => req.ip,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
 });
 
 app.use("/api", limiter);
 app.use("/auth", limiter);
 
-// Webhook (before body parser)
+// Webhook before body parser
 app.use("/api/webhooks", webhookRouter);
 
 // Logging
@@ -86,9 +86,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-// DB
-await connectDB();
 
 // Session
 app.use(
@@ -120,6 +117,34 @@ app.use((req, res, next) => {
 // Error handler
 app.use(globalErrorHandler);
 
-// START
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// ✅ START SERVER PROPERLY (NO CRASH)
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    const PORT = process.env.PORT;
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("❌ DB connection failed:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// ✅ DEBUG (IMPORTANT)
+process.on("SIGTERM", () => {
+  console.log("💀 SIGTERM received");
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("🔥 Unhandled Rejection:", err);
+});
