@@ -24,8 +24,7 @@ import "./configs/passport.js";
 const app = express();
 app.set("trust proxy", 1);
 
-
-// ✅ CLEAN CORS CONFIG (FINAL)
+// ✅ ALLOWED ORIGINS
 const allowedOrigins = [
   "https://rental-car-wheat-nu.vercel.app",
   "http://localhost:5173",
@@ -33,9 +32,10 @@ const allowedOrigins = [
   "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
 ];
 
+// ✅ CORS CONFIG (FINAL)
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Postman / server calls
+    if (!origin) return callback(null, true);
 
     const cleanOrigin = origin.replace(/\/$/, "");
 
@@ -49,19 +49,12 @@ const corsOptions = {
   credentials: true
 };
 
-
-// 🔥 GLOBAL MIDDLEWARES
-
+// 🔥 MIDDLEWARES
 app.use(helmet());
-
-// ✅ ONLY THIS (NO MANUAL HEADERS)
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // preflight
 
-// ✅ Preflight handle (IMPORTANT)
-app.options("*", cors(corsOptions));
-
-
-// Rate limit
+// Rate limiter
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
@@ -72,23 +65,19 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 app.use("/auth", limiter);
 
-
 // Webhook (before body parser)
 app.use("/api/webhooks", webhookRouter);
-
 
 // Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-
 // Body parser
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-
-// Simple sanitize (optional)
+// Sanitize
 app.use((req, res, next) => {
   if (req.body) {
     req.body = mongoSanitize.sanitize(req.body);
@@ -96,12 +85,10 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// DB connect
+// DB
 await connectDB();
 
-
-// Session (Google auth)
+// Session
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "secret",
@@ -110,14 +97,12 @@ app.use(
   })
 );
 
-
 // Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-
 // ROUTES
-app.get("/", (req, res) => res.send("Server is running"));
+app.get("/", (req, res) => res.send("Server running"));
 
 app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);
@@ -125,17 +110,14 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/auth", authRouter);
 
-
-// 404 handler
+// 404
 app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl}`, 404));
 });
 
-
-// Global error
+// Error handler
 app.use(globalErrorHandler);
 
-
-// START SERVER
+// START
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
