@@ -13,156 +13,129 @@ import connectDB from "./configs/db.js";
 import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
-import authRouter from "./routes/authRoutes.js"; 
+import authRouter from "./routes/authRoutes.js";
 import webhookRouter from "./routes/webhookRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
 import globalErrorHandler from "./middleware/errorMiddleware.js";
 import AppError from "./utils/AppError.js";
 
-import "./configs/passport.js"; 
+import "./configs/passport.js";
 
-// Initialize Express App
 const app = express();
-app.set('trust proxy', 1)
+app.set("trust proxy", 1);
+
+
+// ✅ CLEAN CORS CONFIG (FINAL)
+const allowedOrigins = [
+  "https://rental-car-wheat-nu.vercel.app",
+  "http://localhost:5173",
+  "https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
+  "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
+];
 
 const corsOptions = {
-  origin: function(origin, callback) {
-    const allowedOrigins = [
-      process.env.CLIENT_URL,
-      "http://localhost:5173",
-      "https://rental-car-wheat-nu.vercel.app",
-      "https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
-      "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
-    ].filter(Boolean);
-    
-    // ✅ trailing slash remove karke compare karo
-    const cleanOrigin = origin ? origin.replace(/\/$/, "") : origin;
-    
-    if (!cleanOrigin || allowedOrigins.includes(cleanOrigin)) {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // Postman / server calls
+
+    const cleanOrigin = origin.replace(/\/$/, "");
+
+    if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
-      console.log("CORS blocked:", cleanOrigin); // debug ke liye
+      console.log("❌ CORS blocked:", cleanOrigin);
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  credentials: true
 };
 
-const sanitizeHtml = (value) => {
-  if (typeof value === "string") {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;")
-      .trim();
-  }
 
-  if (Array.isArray(value)) {
-    return value.map(sanitizeHtml);
-  }
+// 🔥 GLOBAL MIDDLEWARES
 
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [key, sanitizeHtml(nestedValue)])
-    );
-  }
-
-  return value;
-};
-
-const express5CompatibleSanitizers = (req, res, next) => {
-  // Express 5 exposes req.query via a getter-only property, so older middleware
-  // that reassigns req.query crashes. We sanitize the writable request fields here.
-  if (req.body) {
-    req.body = sanitizeHtml(mongoSanitize.sanitize(req.body));
-  }
-
-  if (req.params) {
-    req.params = sanitizeHtml(mongoSanitize.sanitize(req.params));
-  }
-
-  next();
-};
-
-// 1) GLOBAL MIDDLEWARES
-// Set security HTTP headers
 app.use(helmet());
 
-// Enable CORS early so preflight requests receive headers before other middleware.
+// ✅ ONLY THIS (NO MANUAL HEADERS)
 app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", corsOptions.origin);
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Methods", corsOptions.methods.join(","));
-    res.header("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
-    return res.sendStatus(204);
-  }
 
-  next();
-});
+// ✅ Preflight handle (IMPORTANT)
+app.options("*", cors(corsOptions));
 
-// Limit requests from same API
+
+// Rate limit
 const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
-  message: 'Too many requests from this IP, please try again in an hour!',
+  message: "Too many requests, try again later",
   skip: (req) => req.method === "OPTIONS"
 });
-app.use('/api', limiter);
-app.use('/auth', limiter);
 
-// Webhook route MUST be before body-parser
-app.use('/api/webhooks', webhookRouter);
+app.use("/api", limiter);
+app.use("/auth", limiter);
 
-// Development logging
+
+// Webhook (before body parser)
+app.use("/api/webhooks", webhookRouter);
+
+
+// Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Body parser, reading data from body into req.body
+
+// Body parser
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-// Data sanitization against NoSQL injection and XSS.
-app.use(express5CompatibleSanitizers);
 
-// Connect Database
+// Simple sanitize (optional)
+app.use((req, res, next) => {
+  if (req.body) {
+    req.body = mongoSanitize.sanitize(req.body);
+  }
+  next();
+});
+
+
+// DB connect
 await connectDB();
 
-//  SESSION (REQUIRED FOR GOOGLE AUTH)
-app.use(session({
-  secret: process.env.SESSION_SECRET || "your_secret_key",
-  resave: false,
-  saveUninitialized: false
-}));
 
-// PASSPORT MIDDLEWARE
+// Session (Google auth)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false
+  })
+);
+
+
+// Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.get('/', (req, res) => res.send('server is running'));
 
-app.use('/api/user', userRouter);
-app.use('/api/owner', ownerRouter);
-app.use('/api/bookings', bookingRouter);
-app.use('/api/reviews', reviewRouter);
-app.use('/auth', authRouter);
+// ROUTES
+app.get("/", (req, res) => res.send("Server is running"));
 
-// Handle unhandled routes.
-// Express 5 no longer accepts a bare "*" matcher here.
+app.use("/api/user", userRouter);
+app.use("/api/owner", ownerRouter);
+app.use("/api/bookings", bookingRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/auth", authRouter);
+
+
+// 404 handler
 app.use((req, res, next) => {
-  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+  next(new AppError(`Can't find ${req.originalUrl}`, 404));
 });
 
-// GLOBAL ERROR HANDLING MIDDLEWARE
+
+// Global error
 app.use(globalErrorHandler);
 
-const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => console.log(`server running on port ${PORT}`));
+// START SERVER
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
