@@ -148,3 +148,5 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (err) => {
   console.error("🔥 Unhandled Rejection:", err);
 });
+
+module.exports = app;
