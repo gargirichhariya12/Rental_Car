@@ -34,9 +34,13 @@ const corsOptions = {
       "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
     ].filter(Boolean);
     
-    if (!origin || allowedOrigins.includes(origin)) {
+    // ✅ trailing slash remove karke compare karo
+    const cleanOrigin = origin ? origin.replace(/\/$/, "") : origin;
+    
+    if (!cleanOrigin || allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
+      console.log("CORS blocked:", cleanOrigin); // debug ke liye
       callback(new Error("Not allowed by CORS"));
     }
   },
