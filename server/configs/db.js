@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 
 let mongoServer;
 
@@ -13,7 +12,7 @@ const connectDB = async () => {
                 await mongoose.connect(`${process.env.MONGODB_URI}/car-rental`, {
                     retryWrites: true,
                     w: "majority"
-                })
+                });
                 console.log("✓ Connected to MongoDB Atlas");
                 return;
             } catch (atlasError) {
@@ -27,15 +26,20 @@ const connectDB = async () => {
                 retryWrites: true,
                 w: "majority",
                 serverSelectionTimeoutMS: 3000
-            })
+            });
             console.log("✓ Connected to Local MongoDB");
             return;
         } catch (localError) {
             console.warn("⚠ Local MongoDB not available, starting in-memory MongoDB...");
         }
         
-        // Fall back to in-memory MongoDB (development mode)
+        // Fall back to in-memory MongoDB (development only)
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error("❌ No MongoDB connection available in production. Set MONGODB_URI.");
+        }
+
         console.log("🚀 Starting MongoDB Memory Server...");
+        const { MongoMemoryServer } = await import("mongodb-memory-server"); // ✅ dynamic import
         mongoServer = await MongoMemoryServer.create();
         const mongoUri = mongoServer.getUri();
         
@@ -56,4 +60,4 @@ process.on("SIGINT", async () => {
     }
 });
 
-export default connectDB
+export default connectDB;
