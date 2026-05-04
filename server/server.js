@@ -23,6 +23,7 @@ import "./configs/passport.js";
 
 // Initialize Express App
 const app = express();
+app.set('trust proxy', 1)
 
 const corsOptions = {
   origin: function(origin, callback) {
