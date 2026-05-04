@@ -3,16 +3,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend/server.js"
+      "destination": "/server/server.js"
     },
     {
       "source": "/auth/(.*)",
-      "destination": "/backend/server.js"
+      "destination": "/server/server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/client/$1"
     }
-  ],
-  "functions": {
-    "backend/server.js": {
-      "runtime": "vercel-node@latest"
-    }
-  }
+  ]
 }
