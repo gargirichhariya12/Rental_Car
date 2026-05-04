@@ -24,6 +24,7 @@ import "./configs/passport.js";
 const app = express();
 app.set("trust proxy", 1);
 
+
 // ✅ ALLOWED ORIGINS
 const allowedOrigins = [
   "https://rental-car-wheat-nu.vercel.app",
@@ -59,7 +60,8 @@ const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000,
   message: "Too many requests, try again later",
-  skip: (req) => req.method === "OPTIONS"
+  skip: (req) => req.method === "OPTIONS",
+  keyGenerator: (req) => req.ip,
 });
 
 app.use("/api", limiter);
