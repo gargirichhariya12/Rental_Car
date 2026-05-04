@@ -23,7 +23,7 @@ import "./configs/passport.js";
 
 const app = express();
 
-// ✅ VERY IMPORTANT (Render fix)
+// ✅ FIX: Render/Proxy Trust
 app.set("trust proxy", true);
 
 // ✅ Allowed origins
@@ -38,9 +38,7 @@ const allowedOrigins = [
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
     const cleanOrigin = origin.replace(/\/$/, "");
-
     if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
@@ -54,9 +52,9 @@ const corsOptions = {
 // 🔥 MIDDLEWARES
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // preflight fix
+app.options("*", cors(corsOptions)); 
 
-// ✅ RATE LIMIT (SAFE)
+// ✅ RATE LIMIT
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 100,
@@ -67,7 +65,7 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 app.use("/auth", limiter);
 
-// Webhook before body parser
+// Webhook (body-parser se pehle)
 app.use("/api/webhooks", webhookRouter);
 
 // Logging
@@ -90,9 +88,13 @@ app.use((req, res, next) => {
 // Session
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret",
+    secret: process.env.SESSION_SECRET || "secret_key_123",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === "production", // Production mein true
+        maxAge: 24 * 60 * 60 * 1000 
+    }
   })
 );
 
@@ -101,7 +103,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ROUTES
-app.get("/", (req, res) => res.send("Server running"));
+app.get("/", (req, res) => res.send("Server is Healthy and Running 🚀"));
 
 app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);
@@ -109,42 +111,45 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/auth", authRouter);
 
-// 404
-app.use((req, res, next) => {
-  next(new AppError(`Can't find ${req.originalUrl}`, 404));
+// 404 handler
+app.all("*", (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Error handler
+// Global Error handler
 app.use(globalErrorHandler);
 
-// ✅ START SERVER PROPERLY (NO CRASH)
-const startServer = async () => {
+// ✅ SERVER START LOGIC (Fixed for Render)
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, async () => {
   try {
     await connectDB();
-
-    const PORT = process.env.PORT;
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-
+    console.log(`🚀 Server running on port ${PORT}`);
   } catch (err) {
     console.error("❌ DB connection failed:", err);
     process.exit(1);
   }
-};
+});
 
-startServer();
-
-// ✅ DEBUG (IMPORTANT)
+// ✅ GRACEFUL SHUTDOWN & DEBUGGING
 process.on("SIGTERM", () => {
-  console.log("💀 SIGTERM received");
+  console.log("💀 SIGTERM received. Shutting down gracefully...");
+  server.close(() => {
+    console.log("💥 Process terminated!");
+  });
 });
 
 process.on("uncaughtException", (err) => {
-  console.error("🔥 Uncaught Exception:", err);
+  console.error("🔥 Uncaught Exception! Shutting down...");
+  console.error(err.name, err.message);
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error("🔥 Unhandled Rejection:", err);
+  console.error("🔥 Unhandled Rejection! Shutting down...");
+  console.error(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
 });
