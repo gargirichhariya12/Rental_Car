@@ -54,7 +54,7 @@ const corsOptions = {
 // 🔥 MIDDLEWARES
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // preflight fix
+
 
 // ✅ RATE LIMIT (SAFE)
 const limiter = rateLimit({
@@ -149,4 +149,4 @@ process.on("unhandledRejection", (err) => {
   console.error("🔥 Unhandled Rejection:", err);
 });
 
-module.exports = app;
+export default app;

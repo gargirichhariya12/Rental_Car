@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 
-const DATABASE_NAME = "car-rental";
 
+import dns from "dns";
+dns.setServers(["0.0.0.0", "8.8.4.4"]);
+
+const DATABASE_NAME = "car-rental";
 let mongoServer;
 
 const buildMongoUri = (mongoUri) => {
@@ -20,13 +23,15 @@ const connectDB = async () => {
 
         if (process.env.MONGODB_URI) {
             try {
-                await mongoose.connect(buildMongoUri(process.env.MONGODB_URI), {
+                const uri = buildMongoUri(process.env.MONGODB_URI)
+                await mongoose.connect(uri, {
                     retryWrites: true,
                     w: "majority"
                 });
                 console.log("Connected to MongoDB Atlas");
                 return;
             } catch (atlasError) {
+                console.error(atlasError);
                 console.warn("MongoDB Atlas connection failed, falling back to local MongoDB...");
             }
         }
