@@ -1,9 +1,5 @@
 import mongoose from "mongoose";
 
-
-import dns from "dns";
-dns.setServers(["0.0.0.0", "8.8.4.4"]);
-
 const DATABASE_NAME = "car-rental";
 let mongoServer;
 
