@@ -1,41 +1,50 @@
 import mongoose from "mongoose";
 
 const DATABASE_NAME = "car-rental";
+
 let mongoServer;
 
 const buildMongoUri = (mongoUri) => {
-    const parsedMongoUri = new URL(mongoUri);
+    if (!mongoUri) return mongoUri;
+    try {
+        const parsedMongoUri = new URL(mongoUri);
 
-    if (!parsedMongoUri.pathname || parsedMongoUri.pathname === "/") {
-        parsedMongoUri.pathname = `/${DATABASE_NAME}`;
+        if (!parsedMongoUri.pathname || parsedMongoUri.pathname === "/") {
+            parsedMongoUri.pathname = `/${DATABASE_NAME}`;
+        }
+
+        return parsedMongoUri.toString();
+    } catch (err) {
+        console.warn("Could not parse MONGODB_URI with standard URL parser, using raw URI.");
+        return mongoUri;
     }
-
-    return parsedMongoUri.toString();
 };
 
 const connectDB = async () => {
+    // Prevent multiple connections in serverless or repeated calls
+    if (mongoose.connection.readyState >= 1) {
+        return;
+    }
+
     try {
-        mongoose.connection.on('connected', () => console.log("Database Connected"))
+        mongoose.connection.on('connected', () => console.log("Database Connected"));
 
         if (process.env.MONGODB_URI) {
             try {
-                const uri = buildMongoUri(process.env.MONGODB_URI)
-                await mongoose.connect(uri, {
-                    retryWrites: true,
-                    w: "majority"
+                const formattedUri = buildMongoUri(process.env.MONGODB_URI);
+                await mongoose.connect(formattedUri, {
+                    serverSelectionTimeoutMS: 5000
                 });
                 console.log("Connected to MongoDB Atlas");
                 return;
             } catch (atlasError) {
-                console.error(atlasError);
-                console.warn("MongoDB Atlas connection failed, falling back to local MongoDB...");
+                console.warn("MongoDB Atlas connection failed:", atlasError.message);
+                console.warn("Falling back to local MongoDB...");
             }
         }
 
         try {
             await mongoose.connect(`mongodb://localhost:27017/${DATABASE_NAME}`, {
-                retryWrites: true,
-                w: "majority",
                 serverSelectionTimeoutMS: 3000
             });
             console.log("Connected to Local MongoDB");
@@ -45,7 +54,7 @@ const connectDB = async () => {
         }
 
         if (process.env.NODE_ENV === 'production') {
-            throw new Error("No MongoDB connection available in production. Set MONGODB_URI.");
+            throw new Error("No MongoDB connection available in production. Please check MONGODB_URI in environment variables.");
         }
 
         console.log("Starting MongoDB Memory Server...");
@@ -60,7 +69,7 @@ const connectDB = async () => {
         console.error("Database connection failed:", error.message);
         throw error;
     }
-}
+};
 
 process.on("SIGINT", async () => {
     if (mongoServer) {

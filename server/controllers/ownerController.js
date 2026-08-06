@@ -5,7 +5,6 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import CarService from "../services/CarService.js";
 import imageKit from "../configs/imagekit.js";
-import fs from "fs";
 
 export const changeRoleToOwner = catchAsync(async (req, res, next) => {
   const { _id } = req.user;
@@ -273,14 +272,11 @@ export const updateUserImage = catchAsync(async (req, res, next) => {
     return next(new AppError("Image file is required", 400));
   }
 
-  const fileBuffer = fs.readFileSync(req.file.path);
   const uploadResponse = await imageKit.upload({
-    file: fileBuffer,
+    file: req.file.buffer,
     fileName: `user-${_id}-${Date.now()}`,
     folder: "/users",
   });
-
-  fs.unlinkSync(req.file.path);
 
   const imageUrl = imageKit.url({
     path: uploadResponse.filePath,

@@ -30,6 +30,7 @@ app.set("trust proxy", true);
 const allowedOrigins = [
   "https://rental-car-wheat-nu.vercel.app",
   "http://localhost:5173",
+  "http://localhost:3000",
   "https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
   "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
 ];
@@ -41,7 +42,10 @@ const corsOptions = {
 
     const cleanOrigin = origin.replace(/\/$/, "");
 
-    if (allowedOrigins.includes(cleanOrigin)) {
+    // Allow any Vercel preview for this project
+    const isVercelPreview = /^https:\/\/rental[-a-z0-9]+-gargi-richhariyas-projects\.vercel\.app$/.test(cleanOrigin);
+
+    if (allowedOrigins.includes(cleanOrigin) || isVercelPreview) {
       callback(null, true);
     } else {
       console.log("❌ CORS blocked:", cleanOrigin);
@@ -54,7 +58,6 @@ const corsOptions = {
 // 🔥 MIDDLEWARES
 app.use(helmet());
 app.use(cors(corsOptions));
-
 
 // ✅ RATE LIMIT (SAFE)
 const limiter = rateLimit({

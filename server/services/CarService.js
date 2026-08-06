@@ -1,22 +1,16 @@
 import Car from "../models/Car.js";
 import AppError from "../utils/AppError.js";
 import imageKit from "../configs/imagekit.js";
-import fs from "fs";
 
 class CarService {
   async addCar(ownerId, carData, file) {
     if (!file) throw new AppError("Car image is required", 400);
 
-    // Upload to ImageKit
-    const fileBuffer = fs.readFileSync(file.path);
     const uploadResponse = await imageKit.upload({
-      file: fileBuffer,
+      file: file.buffer,
       fileName: `car-${Date.now()}`,
       folder: "/cars",
     });
-
-    // Cleanup local file
-    fs.unlinkSync(file.path);
 
     const imageUrl = imageKit.url({
       path: uploadResponse.filePath,
