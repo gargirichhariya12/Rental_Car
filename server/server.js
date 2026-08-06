@@ -29,10 +29,11 @@ app.set("trust proxy", true);
 // ✅ Allowed origins
 const allowedOrigins = [
   "https://rental-car-wheat-nu.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
-  "https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app"
+  //"http://localhost:5173",
+  //"http://localhost:3000",
+  //"https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
+  //"https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app",
+  "https://rental-car-red-phi.vercel.app/"
 ];
 
 // ✅ CORS CONFIG
