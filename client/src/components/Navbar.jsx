@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import React from "react";
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
+import { LogOut, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
 import { useAppContext } from '../Context/AppContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   void motion;
@@ -61,6 +60,10 @@ export default function Navbar() {
   };
 
   const accentTextClass = "text-indigo-400 hover:text-indigo-300";
+  const roleLabel = user?.role === 'owner' ? 'Owner' : 'User';
+  const roleBadgeClass = user?.role === 'owner'
+    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+    : 'border-sky-500/30 bg-sky-500/10 text-sky-300';
 
   return (
     <motion.nav 
@@ -68,7 +71,7 @@ export default function Navbar() {
       animate="visible"
       variants={navVariants}
       className={`w-full px-4 py-4 sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 py-3" : "bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900"
+        scrolled ? "bg-black  backdrop-blur-xl border-b border-zinc-800 py-3" : "bg-black backdrop-blur-md border-b border-zinc-900"
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -84,7 +87,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-full px-4 py-1.5 backdrop-blur-md shadow-lg shadow-black/20">
+        <div className="hidden md:flex items-center gap-1 bg-black border border-zinc-800 rounded-full px-4 py-1.5 backdrop-blur-md shadow-lg shadow-black/20">
           {menuLinks.map((link, index) => (
             <Link
               key={index}
@@ -103,19 +106,15 @@ export default function Navbar() {
               )}
             </Link>
           ))}
-          {user?.role === 'admin' && (
-            <Link 
-              to="/admin" 
-              onClick={() => setOpen(false)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${accentTextClass}`}
-            >
-              Admin Panel
-            </Link>
-          )}
         </div>
 
         {/* Right Buttons */}
         <div className="hidden md:flex items-center gap-4">
+          {user && (
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${roleBadgeClass}`}>
+              {roleLabel}
+            </span>
+          )}
           {user && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -181,10 +180,10 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            {user?.role === 'admin' && (
-              <Link to="/admin" onClick={() => setOpen(false)} className={`text-xl font-medium ${isActivePath('/admin') ? 'text-indigo-300' : 'text-indigo-400'}`}>
-                Admin Panel
-              </Link>
+            {user && (
+              <span className={`rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] ${roleBadgeClass}`}>
+                Role: {roleLabel}
+              </span>
             )}
             <hr className="w-1/2 border-zinc-800 my-2" />
             {user && (

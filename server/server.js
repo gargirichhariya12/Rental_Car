@@ -13,139 +13,145 @@ import connectDB from "./configs/db.js";
 import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
-import authRouter from "./routes/authRoutes.js"; 
+import authRouter from "./routes/authRoutes.js";
 import webhookRouter from "./routes/webhookRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
-import adminRouter from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middleware/errorMiddleware.js";
 import AppError from "./utils/AppError.js";
 
-import "./configs/passport.js"; 
+import "./configs/passport.js";
 
-// Initialize Express App
 const app = express();
 
+// ✅ VERY IMPORTANT (Render fix)
+app.set("trust proxy", true);
+
+// ✅ Allowed origins
+const allowedOrigins = [
+  //"https://rental-car-wheat-nu.vercel.app",
+  //"http://localhost:5173",
+  //"http://localhost:3000",
+  //"https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
+  //"https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app",
+  "https://rental-car-red-phi.vercel.app"
+];
+
+// ✅ CORS CONFIG
 const corsOptions = {
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/$/, "");
+
+    // Allow any Vercel preview for this project
+    const isVercelPreview = /^https:\/\/rental[-a-z0-9]+-gargi-richhariyas-projects\.vercel\.app$/.test(cleanOrigin);
+
+    if (allowedOrigins.includes(cleanOrigin) || isVercelPreview) {
+      callback(null, true);
+    } else {
+      console.log("❌ CORS blocked:", cleanOrigin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 };
 
-const sanitizeHtml = (value) => {
-  if (typeof value === "string") {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;")
-      .trim();
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(sanitizeHtml);
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, nestedValue]) => [key, sanitizeHtml(nestedValue)])
-    );
-  }
-
-  return value;
-};
-
-const express5CompatibleSanitizers = (req, res, next) => {
-  // Express 5 exposes req.query via a getter-only property, so older middleware
-  // that reassigns req.query crashes. We sanitize the writable request fields here.
-  if (req.body) {
-    req.body = sanitizeHtml(mongoSanitize.sanitize(req.body));
-  }
-
-  if (req.params) {
-    req.params = sanitizeHtml(mongoSanitize.sanitize(req.params));
-  }
-
-  next();
-};
-
-// 1) GLOBAL MIDDLEWARES
-// Set security HTTP headers
+// 🔥 MIDDLEWARES
 app.use(helmet());
-
-// Enable CORS early so preflight requests receive headers before other middleware.
 app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", corsOptions.origin);
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Methods", corsOptions.methods.join(","));
-    res.header("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
-    return res.sendStatus(204);
-  }
 
-  next();
-});
-
-// Limit requests from same API
+// ✅ RATE LIMIT (SAFE)
 const limiter = rateLimit({
-  max: 100,
   windowMs: 60 * 60 * 1000,
-  message: 'Too many requests from this IP, please try again in an hour!',
-  skip: (req) => req.method === "OPTIONS"
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
 });
-app.use('/api', limiter);
-app.use('/auth', limiter);
 
-// Webhook route MUST be before body-parser
-app.use('/api/webhooks', webhookRouter);
+app.use("/api", limiter);
+app.use("/auth", limiter);
 
-// Development logging
+// Webhook before body parser
+app.use("/api/webhooks", webhookRouter);
+
+// Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Body parser, reading data from body into req.body
+// Body parser
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-// Data sanitization against NoSQL injection and XSS.
-app.use(express5CompatibleSanitizers);
+// Sanitize
+app.use((req, res, next) => {
+  if (req.body) {
+    req.body = mongoSanitize.sanitize(req.body);
+  }
+  next();
+});
 
-// Connect Database
-await connectDB();
+// Session
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false
+  })
+);
 
-//  SESSION (REQUIRED FOR GOOGLE AUTH)
-app.use(session({
-  secret: process.env.SESSION_SECRET || "your_secret_key",
-  resave: false,
-  saveUninitialized: false
-}));
-
-// PASSPORT MIDDLEWARE
+// Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.get('/', (req, res) => res.send('server is running'));
+// ROUTES
+app.get("/", (req, res) => res.send("Server running"));
 
-app.use('/api/user', userRouter);
-app.use('/api/owner', ownerRouter);
-app.use('/api/bookings', bookingRouter);
-app.use('/api/reviews', reviewRouter);
-app.use('/api/admin', adminRouter);
-app.use('/auth', authRouter);
+app.use("/api/user", userRouter);
+app.use("/api/owner", ownerRouter);
+app.use("/api/bookings", bookingRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/auth", authRouter);
 
-// Handle unhandled routes.
-// Express 5 no longer accepts a bare "*" matcher here.
+// 404
 app.use((req, res, next) => {
-  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+  next(new AppError(`Can't find ${req.originalUrl}`, 404));
 });
 
-// GLOBAL ERROR HANDLING MIDDLEWARE
+// Error handler
 app.use(globalErrorHandler);
 
-const PORT = process.env.PORT || 3000;
+// ✅ START SERVER PROPERLY (NO CRASH)
+const startServer = async () => {
+  try {
+    await connectDB();
 
-app.listen(PORT, () => console.log(`server running on port ${PORT}`));
+    const PORT = process.env.PORT || 3000;
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("❌ DB connection failed:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// ✅ DEBUG (IMPORTANT)
+process.on("SIGTERM", () => {
+  console.log("💀 SIGTERM received");
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("🔥 Unhandled Rejection:", err);
+});
+
+export default app;

@@ -26,7 +26,7 @@ const parseTokenExpiry = (accessToken) => {
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
-  const currency = import.meta.env.VITE_CURRENCY || "$";
+  const currency = import.meta.env.VITE_CURRENCY || "₹";
   const [token, setToken] = useState(localStorage.getItem('token')); // Access token
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +74,7 @@ export const AppProvider = ({ children }) => {
       const { data } = await axios.get('/api/user/data');
       if (data.status === 'success') {
         setUser(data.data.user);
-        setIsOwner(data.data.user.role === 'owner' || data.data.user.role === 'admin');
+        setIsOwner(data.data.user.role === 'owner');
       }
     } catch (error) {
       console.error("Auth verification failed", error);

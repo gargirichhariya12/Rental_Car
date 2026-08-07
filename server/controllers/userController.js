@@ -1,27 +1,30 @@
 import User from "../models/User.js";
 import CarService from "../services/CarService.js";
+import RecommendationService from "../services/RecommendationService.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import { sendTokens } from "../utils/tokenUtils.js";
 
 // Register user
 export const registerUser = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
+  const normalizedEmail = email?.toLowerCase().trim();
 
-  if (!name || !email || !password || password.length < 8) {
+  if (!name?.trim() || !normalizedEmail || !password || password.length < 8) {
     return next(new AppError("Please provide all required fields correctly (password min 8 chars)", 400));
   }
 
-  const userExists = await User.findOne({ email });
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     return next(new AppError("User already exists with this email", 400));
   }
 
-  // Password hashing is handled in model if using pre-save middleware, 
-  // but here it was manual in the old code. We'll stick to manual for consistency 
-  // or add a pre-save hook. Let's stick to manual for now but use bcrypt.
-  // Actually, I'll add bcrypt hash here as before.
-  const user = await User.create({ name, email, password, role });
+  const user = await User.create({
+    name: name.trim(),
+    email: normalizedEmail,
+    password,
+    role: "user"
+  });
 
   sendTokens(res, user, 201);
 });
@@ -29,12 +32,13 @@ export const registerUser = catchAsync(async (req, res, next) => {
 // Login user
 export const loginUser = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  const normalizedEmail = email?.toLowerCase().trim();
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return next(new AppError("Please provide email and password", 400));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email: normalizedEmail }).select("+password");
   if (!user || !(await user.comparePassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
   }
@@ -69,5 +73,15 @@ export const getCarDetails = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: { car }
+  });
+});
+
+export const getRecommendations = catchAsync(async (req, res) => {
+  const recommendations = await RecommendationService.getRecommendations(req.body);
+
+  res.status(200).json({
+    status: "success",
+    results: recommendations.length,
+    data: { recommendations },
   });
 });
