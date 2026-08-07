@@ -33,11 +33,12 @@ const allowedOrigins = [
   //"http://localhost:3000",
   //"https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
   //"https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app",
-  "https://rental-car-red-phi.vercel.app/"
+  "https://rental-car-red-phi.vercel.app"
 ];
 
 // ✅ CORS CONFIG
 const corsOptions = {
+
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
 
