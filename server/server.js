@@ -1,5 +1,5 @@
 import express from "express";
-import "dotenv/config";
+import "./configs/env.js";
 import cors from "cors";
 import session from "express-session";
 import passport from "passport";
@@ -8,6 +8,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
+import axios from "axios";
 
 import connectDB from "./configs/db.js";
 import userRouter from "./routes/userRoutes.js";
@@ -29,8 +30,8 @@ app.set("trust proxy", true);
 // ✅ Allowed origins
 const allowedOrigins = [
   //"https://rental-car-wheat-nu.vercel.app",
-  //"http://localhost:5173",
-  //"http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:3000",
   //"https://rental-car-git-main-gargi-richhariyas-projects.vercel.app",
   //"https://rental-fptols4yn-gargi-richhariyas-projects.vercel.app",
   "https://rental-car-red-phi.vercel.app"
@@ -107,6 +108,55 @@ app.use(passport.session());
 
 // ROUTES
 app.get("/", (req, res) => res.send("Server running"));
+
+if (process.env.NODE_ENV !== "production") {
+  app.get("/api/debug/viasocket", (req, res) => {
+    res.status(200).json({
+      status: "success",
+      data: {
+        bookingCreatedWebhookConfigured: Boolean(process.env.VIASOCKET_BOOKING_CREATED_WEBHOOK),
+        bookingConfirmedWebhookConfigured: Boolean(process.env.VIASOCKET_BOOKING_CONFIRMED_WEBHOOK),
+      },
+    });
+  });
+
+  app.post("/api/debug/viasocket/booking-created", async (req, res, next) => {
+    try {
+      if (!process.env.VIASOCKET_BOOKING_CREATED_WEBHOOK) {
+        return res.status(503).json({
+          status: "error",
+          message: "VIASOCKET_BOOKING_CREATED_WEBHOOK is not configured",
+        });
+      }
+
+      const payload = {
+        bookingId: "local_debug_booking",
+        ownerEmail: "owner@example.com",
+        ownerName: "Local Debug Owner",
+        clientEmail: "client@example.com",
+        clientName: "Local Debug Client",
+        carName: "Local Debug Car",
+        createdAt: new Date().toISOString(),
+      };
+
+      const response = await axios.post(process.env.VIASOCKET_BOOKING_CREATED_WEBHOOK, payload, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 10000,
+      });
+
+      res.status(200).json({
+        status: "success",
+        message: "viaSocket booking-created test webhook sent",
+        data: {
+          viasocketStatus: response.status,
+          viasocketResponse: response.data,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+}
 
 app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);

@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./configs/env.js";
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from "mongoose";
 import express from "express";

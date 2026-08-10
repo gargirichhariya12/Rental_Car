@@ -114,6 +114,9 @@ function CarDetails() {
       });
 
       if (data.status === 'success') {
+        if (data.data?.webhook) {
+          console.info('Booking webhook result:', data.data.webhook);
+        }
         toast.success('Booking created successfully');
         navigate('/my-bookings');
       }
