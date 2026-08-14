@@ -8,14 +8,27 @@ const backendBaseUrl = (process.env.BACKEND_URL || "http://localhost:3000").repl
 const googleCallbackUrl =
   process.env.GOOGLE_CALLBACK_URL || `${backendBaseUrl}/auth/google/callback`;
 
-const hasConfiguredGoogleOAuth = Boolean(
+const isMissingOrPlaceholder = (value) => {
+  if (!value) return true;
+
+  const normalizedValue = value.toLowerCase().trim();
+
+  return (
+    normalizedValue.includes("your_google") ||
+    normalizedValue.includes("your-google") ||
+    normalizedValue.includes("placeholder") ||
+    normalizedValue.includes("change_me")
+  );
+};
+
+export const isGoogleOAuthReady = Boolean(
   googleClientId &&
   googleClientSecret &&
-  !googleClientId.includes("your_google_client_id_here") &&
-  !googleClientSecret.includes("your_google_client_secret_here")
+  !isMissingOrPlaceholder(googleClientId) &&
+  !isMissingOrPlaceholder(googleClientSecret)
 );
 
-if (hasConfiguredGoogleOAuth) {
+if (isGoogleOAuthReady) {
   passport.use(new GoogleStrategy(
     {
       clientID: googleClientId,
@@ -71,6 +84,8 @@ if (hasConfiguredGoogleOAuth) {
       }
     }
   ));
+} else {
+  console.warn("Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.");
 }
 
 passport.serializeUser((user, done) => {

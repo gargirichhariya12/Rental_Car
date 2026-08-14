@@ -90,7 +90,7 @@ const Login = ({ setShowLogin }) => {
 
         window.location.assign(`${backendBaseUrl}/auth/google`);
       } catch {
-        toast.error('Backend server is not running on http://localhost:3000');
+        toast.error(`Backend server is not reachable at ${backendBaseUrl}`);
       } finally {
         setIsSubmitting(false);
       }

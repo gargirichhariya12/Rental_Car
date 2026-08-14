@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "server": "nodemon server.js",
-    "dev": "nodemon server.js",
-    "start": "node server.js",
-    "dev:mock": "cross-env MONGODB_URI='' node server-mock.js"
+    "dev": "node init && nodemon server.js",
+    "start": "node init && node server.js",
+    "dev:mock": "node init && cross-env MONGODB_URI='' node server-mock.js"
   },
   "keywords": [],
   "author": "",
