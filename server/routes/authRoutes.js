@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
+import { isGoogleOAuthReady } from "../configs/passport.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -11,20 +12,9 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-const isGoogleOAuthConfigured = () => {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
-
-  return Boolean(
-    GOOGLE_CLIENT_ID &&
-    GOOGLE_CLIENT_SECRET &&
-    !GOOGLE_CLIENT_ID.includes("your_google_client_id_here") &&
-    !GOOGLE_CLIENT_SECRET.includes("your_google_client_secret_here")
-  );
-};
-
 //  Start Google Login
 router.get("/google", (req, res, next) => {
-  if (!isGoogleOAuthConfigured()) {
+  if (!isGoogleOAuthReady) {
     return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=google_oauth_not_configured`);
   }
 
@@ -37,16 +27,24 @@ router.get("/google", (req, res, next) => {
 //  Callback
 router.get("/google/callback",
   (req, res, next) => {
-    if (!isGoogleOAuthConfigured()) {
+    if (!isGoogleOAuthReady) {
       return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=google_oauth_not_configured`);
     }
 
-    return next();
+    return passport.authenticate("google", { session: false }, (err, user) => {
+      if (err) {
+        console.error("Google OAuth callback failed:", err);
+        return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`);
+      }
+
+      if (!user) {
+        return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`);
+      }
+
+      req.user = user;
+      return next();
+    })(req, res, next);
   },
-  passport.authenticate("google", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`,
-    session: false // We use JWTs, not sessions for the app itself, but passport might need it for OAuth
-  }),
   (req, res) => {
     const accessToken = generateAccessToken(req.user._id);
     const refreshToken = generateRefreshToken(req.user._id);
