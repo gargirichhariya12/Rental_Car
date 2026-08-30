@@ -6,7 +6,7 @@ import Title from "../../components/Owner/Title";
 import FormField from '../../components/Owner/FormField';
 import { Upload, Check} from 'lucide-react'
 
-const currency = import.meta.env.VITE_CURRENCY
+const currency = import.meta.env.VITE_CURRENCY || '₹'
 const categoryOptions = [
   { value: '', label: 'Select a Category' },
   { value: 'Sedan', label: 'Sedan' },

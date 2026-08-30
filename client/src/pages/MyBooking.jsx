@@ -1,17 +1,20 @@
 import Heading from '../components/Heading';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MapPin, CreditCard, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../Context/AppContext';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import StatusBadge from '../components/StatusBadge';
+import EmptyState from '../components/EmptyState';
+import Loader from '../components/Loader';
 
 function MyBooking() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [payingBookingId, setPayingBookingId] = useState(null);
   const { currency, token } = useAppContext();
 
-  const fetchMyBookings = async () => {
+  const fetchMyBookings = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await axios.get('/api/bookings/user');
@@ -23,25 +26,55 @@ function MyBooking() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handlePayment = async (bookingId) => {
+    if (payingBookingId) return;
+
     try {
+      setPayingBookingId(bookingId);
       const { data } = await axios.post(`/api/bookings/checkout/${bookingId}`);
+
       if (data.status === 'success' && data.sessionUrl) {
+        toast.success('Redirecting to secure payment...');
         window.location.href = data.sessionUrl;
+        return;
       }
+
+      toast.error('Payment gateway is not available right now.');
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to initiate payment");
+    } finally {
+      setPayingBookingId(null);
     }
   };
 
   useEffect(() => {
     if (token) fetchMyBookings();
-  }, [token]);
+  }, [fetchMyBookings, token]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+
+    if (!status) return;
+
+    if (status === 'success') {
+      toast.success('Payment completed successfully.');
+      fetchMyBookings();
+    }
+
+    if (status === 'cancel') {
+      toast('Payment was cancelled.');
+    }
+
+    params.delete('status');
+    const nextSearch = params.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`);
+  }, [fetchMyBookings]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading your bookings...</div>;
+    return <Loader />;
   }
 
   return (
@@ -49,9 +82,10 @@ function MyBooking() {
       <Heading heading="My Bookings" />
       
       {bookings.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <p>You have no bookings yet.</p>
-        </div>
+        <EmptyState
+          title='You have no bookings yet'
+          description='Once you reserve a car, your trips and payments will appear here.'
+        />
       ) : (
         <div className="space-y-6 mt-10">
           {bookings.map((booking, index) => (
@@ -121,9 +155,11 @@ function MyBooking() {
                   {booking.paymentStatus === 'unpaid' && booking.status !== 'cancelled' && (
                     <button 
                       onClick={() => handlePayment(booking._id)}
-                      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                      disabled={payingBookingId === booking._id}
+                      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-900/70 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
                     >
-                      Pay Now <ChevronRight className="w-4 h-4" />
+                      {payingBookingId === booking._id ? 'Opening Checkout...' : 'Pay Now'}
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   )}
                 </div>

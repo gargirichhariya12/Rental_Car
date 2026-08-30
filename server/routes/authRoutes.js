@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
+import { isGoogleOAuthReady } from "../configs/passport.js";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -12,32 +13,48 @@ import User from "../models/User.js";
 const router = express.Router();
 
 //  Start Google Login
-router.get("/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"]
-  })
-);
+router.get("/google", (req, res, next) => {
+  if (!isGoogleOAuthReady) {
+    return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=google_oauth_not_configured`);
+  }
+
+  return passport.authenticate("google", {
+    scope: ["profile", "email"],
+    prompt: "select_account"
+  })(req, res, next);
+});
 
 //  Callback
 router.get("/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`,
-    session: false // We use JWTs, not sessions for the app itself, but passport might need it for OAuth
-  }),
+  (req, res, next) => {
+    if (!isGoogleOAuthReady) {
+      return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=google_oauth_not_configured`);
+    }
+
+    return passport.authenticate("google", { session: false }, (err, user) => {
+      if (err) {
+        console.error("Google OAuth callback failed:", err);
+        return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`);
+      }
+
+      if (!user) {
+        return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/?error=auth_failed`);
+      }
+
+      req.user = user;
+      return next();
+    })(req, res, next);
+  },
   (req, res) => {
-    // 1) Generate Tokens
     const accessToken = generateAccessToken(req.user._id);
     const refreshToken = generateRefreshToken(req.user._id);
 
-    // 2) Set Tokens in Cookies
     res.cookie('accessToken', accessToken, getAccessCookieOptions());
     res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
 
-    // 3) Redirect to frontend with accessToken (or frontend can fetch it via a separate endpoint)
-    // For production, it's safer to redirect to a page that fetches the token or pass it securely.
-    // Here we'll redirect to a dashboard with the token as a query param (common for simple logic)
-    // or better, a specialized callback page.
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/auth-success?token=${accessToken}`);
+    res.redirect(
+      `${process.env.CLIENT_URL || "http://localhost:5173"}/auth-success?token=${encodeURIComponent(accessToken)}`
+    );
   }
 );
 

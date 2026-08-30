@@ -8,9 +8,29 @@ const toneClasses = {
   neutral: 'bg-gray-800 text-gray-300',
 };
 
-const StatusBadge = ({ label, tone = 'neutral', className = '' }) => {
+const inferToneFromLabel = (label = '') => {
+  const normalizedLabel = String(label).toLowerCase();
+
+  if (['confirmed', 'completed', 'paid', 'available', 'success'].includes(normalizedLabel)) {
+    return 'success';
+  }
+
+  if (['pending', 'warning', 'processing'].includes(normalizedLabel)) {
+    return 'warning';
+  }
+
+  if (['cancelled', 'failed', 'unavailable', 'error'].includes(normalizedLabel)) {
+    return 'danger';
+  }
+
+  return 'neutral';
+};
+
+const StatusBadge = ({ label, tone, className = '' }) => {
+  const resolvedTone = tone || inferToneFromLabel(label);
+
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${toneClasses[tone] || toneClasses.neutral} ${className}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${toneClasses[resolvedTone] || toneClasses.neutral} ${className}`}>
       {label}
     </span>
   );
